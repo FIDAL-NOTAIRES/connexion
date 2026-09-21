@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion — FIDAL Notaires</title>
+<meta name="description" content="Ouverture de journée : une seule autorisation Google, réutilisée ensuite par tous les outils du cabinet.">
+<meta name="theme-color" content="#0F2238">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Connexion">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230F2238'/><path d='M10 17l5 5 8-11' fill='none' stroke='%23FFE764' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230F2238'/><path d='M56 96l28 28 45-62' fill='none' stroke='%23FFE764' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="./acces.js"></script>
+<style>
+:root{
+  --nuit:#0F2238; --canard:#33838B; --orange:#FF982D; --carmin:#A01040; --cyan:#6DD5DC;
+  --jaune-forme:#FFE764; --jaune-texte:#FFC900;
+  --encre:#EAF2F7; --encre-faible:#9FB3C4; --trait:rgba(255,255,255,.10);
+  --fond:#0B1B2E; --carte:rgba(255,255,255,.035);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--encre);
+  background:radial-gradient(1200px 700px at 50% -10%,#173556 0%,var(--fond) 55%,#071324 100%);
+  padding:0 16px 48px;
+}
+h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;margin:0}
+.entete{max-width:760px;margin:0 auto;padding:34px 0 10px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.entete .marque{font-family:Georgia,serif;font-size:22px;letter-spacing:.5px}
+.entete .marque b{font-weight:700}
+.entete .marque small{font-size:12px;letter-spacing:3px;color:var(--encre-faible);margin-left:8px}
+.entete .date{margin-left:auto;color:var(--encre-faible);font-size:13px}
+main{max-width:760px;margin:0 auto}
+.heros{text-align:center;padding:26px 0 8px}
+.heros h1{font-size:34px;color:var(--jaune-forme);line-height:1.15}
+.heros p{color:var(--encre-faible);margin:10px auto 0;max-width:520px;font-size:14.5px;line-height:1.55}
+.action{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 0 8px}
+.btn{
+  font:inherit;font-size:17px;font-weight:600;padding:15px 34px;border-radius:999px;cursor:pointer;
+  background:var(--jaune-forme);color:var(--nuit);border:0;box-shadow:0 8px 30px rgba(255,231,100,.25);
+  transition:transform .12s,box-shadow .2s,background .2s;
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 10px 34px rgba(255,231,100,.35)}
+.btn:active{transform:none}
+.btn[disabled]{opacity:.55;cursor:default;transform:none;box-shadow:none}
+.btn.secondaire{background:none;color:var(--encre);border:1px solid var(--trait);box-shadow:none;font-size:14px;padding:10px 20px}
+.btn.secondaire:hover{border-color:rgba(255,255,255,.3);box-shadow:none}
+.mot{color:var(--encre-faible);font-size:13px;min-height:18px;text-align:center}
+.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:26px}
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden}
+.carte::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,rgba(255,255,255,.15))}
+.carte h2{font-size:17px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.voyant{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.18);flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.voyant.ok{background:#3CC97A;box-shadow:0 0 12px rgba(60,201,122,.7)}
+.voyant.attente{background:var(--orange);box-shadow:0 0 12px rgba(255,152,45,.6)}
+.voyant.ko{background:var(--carmin);box-shadow:0 0 12px rgba(160,16,64,.7)}
+.carte .etat{font-size:14px;line-height:1.5}
+.carte .detail{color:var(--encre-faible);font-size:12.5px;margin-top:6px;line-height:1.5}
+.carte .detail b{color:var(--encre);font-weight:600}
+.liste{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
+.liste li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--trait)}
+.liste li span:last-child{color:var(--encre-faible);white-space:nowrap}
+.liste li.vieux span:last-child{color:var(--orange)}
+.suite{margin-top:30px;border-top:1px solid var(--trait);padding-top:18px}
+.suite h2{font-size:15px;color:var(--encre-faible);letter-spacing:.4px;margin-bottom:12px}
+.raccourcis{display:flex;flex-wrap:wrap;gap:10px}
+.raccourcis a{
+  color:var(--encre);text-decoration:none;font-size:13.5px;padding:9px 15px;border-radius:999px;
+  border:1px solid var(--trait);background:rgba(255,255,255,.03);transition:border-color .15s,background .15s;
+}
+.raccourcis a:hover{border-color:var(--cyan);background:rgba(109,213,220,.08)}
+.raccourcis a i{font-style:normal;color:var(--cyan);margin-right:7px}
+.journal{margin-top:26px;font-size:12px;color:var(--encre-faible)}
+.journal summary{cursor:pointer;user-select:none}
+.journal pre{margin:8px 0 0;white-space:pre-wrap;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.25);padding:10px 12px;border-radius:10px;max-height:220px;overflow:auto}
+.avis{margin-top:18px;background:rgba(160,16,64,.14);border:1px solid rgba(160,16,64,.45);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5}
+.avis[hidden]{display:none}
+@media (max-width:520px){ .heros h1{font-size:27px} .btn{width:100%} }
+</style>
+</head>
+<body>
+
+<header class="entete">
+  <div class="marque"><b>FIDAL</b> <small>NOTAIRES</small></div>
+  <div class="date" id="date"></div>
+</header>
+
+<main>
+  <section class="heros">
+    <h1>Ouverture de journée</h1>
+    <p>Une seule autorisation Google, donnée ici le matin, suffit ensuite à tous les outils du cabinet
+       pour lire le Drive : CARTO, TRENTE et les suivants n'auront plus rien à demander.</p>
+  </section>
+
+  <div class="action">
+    <button class="btn" id="btnOuvrir" type="button">Ouvrir la journée</button>
+    <div class="mot" id="mot">Préparation…</div>
+  </div>
+
+  <div class="avis" id="avisOrigine" hidden>
+    Google refuse la connexion depuis cette adresse. L'adresse de cette page doit figurer parmi les
+    « origines JavaScript autorisées » du client OAuth du cabinet, dans la console Google Cloud.
+  </div>
+
+  <section class="grille" aria-live="polite">
+    <article class="carte" style="--c:var(--cyan)">
+      <h2><span class="voyant" id="vDrive"></span>Drive</h2>
+      <div class="etat" id="eDrive">Non connecté.</div>
+      <div class="detail" id="dDrive">L'accès est en lecture seule et se limite à ce que voit votre compte.</div>
+    </article>
+
+    <article class="carte" style="--c:var(--orange)">
+      <h2><span class="voyant" id="vBase"></span>Base de réglages</h2>
+      <div class="etat" id="eBase">Vérification…</div>
+      <div class="detail" id="dBase">Base mutualisée du cabinet (arbitrages CARTO, réglages PRIX, dates de vérification).</div>
+    </article>
+
+    <article class="carte" style="--c:var(--carmin)">
+      <h2><span class="voyant" id="vBases"></span>Bases préfectorales</h2>
+      <div class="etat" id="eBases">Lecture des dernières vérifications…</div>
+      <ul class="liste" id="lBases"></ul>
+      <div class="detail" id="dBases">La vérification elle-même sera branchée ici ; l'accord donné ce matin la couvrira.</div>
+    </article>
+  </section>
+
+  <div class="action" style="padding-top:18px">
+    <button class="btn secondaire" id="btnRenouveler" type="button" hidden>Renouveler l'accès</button>
+  </div>
+
+  <section class="suite">
+    <h2>Une fois la journée ouverte</h2>
+    <div class="raccourcis">
+      <a href="https://fidal-apps.vercel.app/" target="_blank" rel="noopener"><i>◉</i>FIDAL Apps</a>
+      <a href="https://fidal-apps.vercel.app/carto.html" target="_blank" rel="noopener"><i>✦</i>CARTO</a>
+      <a href="https://trente.vercel.app/" target="_blank" rel="noopener"><i>⌂</i>TRENTE</a>
+      <a href="https://fusion-three-kappa.vercel.app/" target="_blank" rel="noopener"><i>⧉</i>FUSION</a>
+      <a href="https://marteau-rho.vercel.app/" target="_blank" rel="noopener"><i>⚒</i>MARTEAU</a>
+    </div>
+  </section>
+
+  <details class="journal">
+    <summary>Journal technique</summary>
+    <pre id="journal"></pre>
+  </details>
+</main>
+
+<script>
+/* ------------------------------------------------------------------ */
+const E = id => document.getElementById(id);
+const API = "https://prix-mu.vercel.app/api/parametres";
+const journal = [];
+function noter(m){ journal.push(new Date().toLocaleTimeString("fr-FR")+"  "+m); E("journal").textContent = journal.join("\n"); }
+function voyant(id, cl){ const v = E(id); v.className = "voyant"+(cl?" "+cl:""); }
+const heure = t => new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+const dateFr = t => new Date(t).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});
+
+E("date").textContent = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+/* ---------- Drive : l'autorisation Google ---------- */
+let minuteur = null;
+async function afficherConnexion(jeton){
+  voyant("vDrive","ok");
+  E("eDrive").textContent = "Connecté.";
+  E("btnOuvrir").textContent = "Journée ouverte";
+  E("btnOuvrir").disabled = true;
+  E("btnRenouveler").hidden = false;
+  E("mot").textContent = "Les outils du cabinet peuvent lire le Drive jusqu'à "+heure(FidalAcces.expiration())+".";
+  /* qui est connecté ? */
+  try{
+    const r = await fetch("https://www.googleapis.com/drive/v3/about?fields=user(displayName,emailAddress)",
+                          {headers:{Authorization:"Bearer "+jeton}});
+    if(r.ok){
+      const d = await r.json();
+      const u = d.user || {};
+      FidalAcces.noterCompte(u.emailAddress || "");
+      E("dDrive").innerHTML = "Compte <b>"+(u.emailAddress||"")+"</b>"+(u.displayName?" — "+u.displayName:"")+
+                              ".<br>Accès en lecture seule, valable jusqu'à <b>"+heure(FidalAcces.expiration())+"</b>.";
+      noter("Drive : connecté en tant que "+(u.emailAddress||"?"));
+    } else {
+      E("dDrive").textContent = "Jeton obtenu, mais le Drive répond "+r.status+".";
+      noter("Drive /about : HTTP "+r.status);
+    }
+  }catch(e){ noter("Drive /about : "+e.message); }
+  clearTimeout(minuteur);
+  minuteur = setTimeout(expirer, Math.max(1000, FidalAcces.expiration()-Date.now()));
+}
+function expirer(){
+  FidalAcces.oublier();
+  voyant("vDrive","attente");
+  E("eDrive").textContent = "Accès expiré.";
+  E("dDrive").textContent = "Le jeton Google dure une heure. Renouvelez l'accès si vous avez encore besoin du Drive.";
+  E("btnOuvrir").textContent = "Renouveler l'accès";
+  E("btnOuvrir").disabled = false;
+  E("mot").textContent = "";
+  noter("Jeton expiré.");
+}
+async function connecter(interactif){
+  E("mot").textContent = interactif ? "Ouverture de la fenêtre Google…" : "Reprise de l'accord déjà donné…";
+  const j = await FidalAcces.jeton({interactif});
+  if(j){ await afficherConnexion(j); E("avisOrigine").hidden = true; return true; }
+  if(interactif){
+    voyant("vDrive","ko");
+    E("eDrive").textContent = "Connexion refusée ou fenêtre fermée.";
+    E("mot").textContent = "Réessayez, ou vérifiez que la fenêtre Google n'a pas été bloquée.";
+    /* si l'origine n'est pas autorisée sur le client OAuth, Google le dit dans la console ; on prévient */
+    E("avisOrigine").hidden = false;
+    noter("Connexion interactive : aucun jeton.");
+  } else {
+    voyant("vDrive","");
+    E("eDrive").textContent = "Non connecté.";
+    E("mot").textContent = "Cliquez pour donner l'accord du jour.";
+    noter("Reprise silencieuse : aucun jeton (normal au premier accès de la journée).");
+  }
+  return false;
+}
+E("btnOuvrir").onclick = () => connecter(true);
+E("btnRenouveler").onclick = () => connecter(true);
+
+/* Au chargement : si un accord a déjà été donné aujourd'hui, on tente la reprise
+   silencieuse. Le navigateur peut la bloquer (fenêtre non demandée) : le bouton reste. */
+(async () => {
+  const etat = FidalAcces.etat();
+  if(etat && etat.derniereConnexion){
+    E("mot").textContent = "Dernière connexion : "+dateFr(etat.derniereConnexion)+" à "+heure(etat.derniereConnexion)+
+                           (etat.compte ? " ("+etat.compte+")" : "")+".";
+    const aujourdhui = dateFr(etat.derniereConnexion) === dateFr(Date.now());
+    if(aujourdhui){ await connecter(false); return; }
+  }
+  E("mot").textContent = "Cliquez pour donner l'accord du jour.";
+})();
+
+/* ---------- Base de réglages ---------- */
+(async () => {
+  try{
+    const r = await fetch(API+"?outil=carto&cle=arbitrages",{cache:"no-store"});
+    if(!r.ok && r.status!==404) throw new Error("HTTP "+r.status);
+    voyant("vBase","ok");
+    E("eBase").textContent = "Accessible.";
+    noter("Base de réglages : accessible (HTTP "+r.status+").");
+  }catch(e){
+    voyant("vBase","ko");
+    E("eBase").textContent = "Injoignable.";
+    E("dBase").textContent = "Les outils fonctionneront avec leurs réglages locaux. "+e.message;
+    noter("Base de réglages : "+e.message);
+  }
+})();
+
+/* ---------- Bases préfectorales : dates de dernière vérification ----------
+   Lues dans la base de réglages (outil « connexion », clé « bases ») :
+   { "xylo": {"nom":"Arrêtés termites et mérule", "date": 1789000000000}, ... } */
+const BASES_DEFAUT = {
+  xylo:    {nom:"Arrêtés termites et mérule (XYLO)"},
+  risques: {nom:"Zonages de risques (RISQUES)"},
+  urba:    {nom:"Documents d'urbanisme (URBA)"}
+};
+(async () => {
+  let bases = {};
+  try{
+    const r = await fetch(API+"?outil=connexion&cle=bases",{cache:"no-store"});
+    if(r.ok){ const d = await r.json(); if(d && d.valeur && typeof d.valeur==="object") bases = d.valeur; }
+  }catch(e){ noter("Bases préfectorales : "+e.message); }
+  const cles = Object.keys(Object.assign({}, BASES_DEFAUT, bases));
+  const SEUIL = 30*24*3600*1000;   /* au-delà de trente jours, la date passe en orange */
+  let vieux = 0, jamais = 0;
+  E("lBases").innerHTML = cles.map(k => {
+    const b = Object.assign({}, BASES_DEFAUT[k]||{}, bases[k]||{});
+    const d = b.date ? Number(b.date) : 0;
+    if(!d) jamais++; else if(Date.now()-d > SEUIL) vieux++;
+    return `<li class="${d && Date.now()-d>SEUIL ? "vieux":""}"><span>${b.nom||k}</span><span>${d ? "vérifiée le "+dateFr(d) : "jamais vérifiée"}</span></li>`;
+  }).join("");
+  if(!cles.length){ E("eBases").textContent = "Aucune base déclarée."; return; }
+  if(jamais===cles.length){ voyant("vBases","attente"); E("eBases").textContent = "Aucune vérification enregistrée."; }
+  else if(vieux||jamais){ voyant("vBases","attente"); E("eBases").textContent = (vieux+jamais)+" base(s) à revérifier."; }
+  else { voyant("vBases","ok"); E("eBases").textContent = "Toutes les bases ont été vérifiées ce mois-ci."; }
+})();
+</script>
+</body>
+</html>
