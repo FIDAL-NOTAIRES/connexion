@@ -297,10 +297,21 @@ const XYLO_JOURNAL_PAGE = "https://github.com/FIDAL-NOTAIRES/xylo/blob/main/VEIL
 const XYLO_INDEX = "https://xylo-phi.vercel.app/index-arretes.html";
 let veilleEnCours = false;
 
+const XYLO_JOURNAL_API = "https://api.github.com/repos/FIDAL-NOTAIRES/xylo/contents/VEILLE.md";
+/* Le canal brut de GitHub est mis en cache jusqu'à cinq minutes : pour voir une
+   veille qui vient de s'écrire, on lit d'abord par l'interface GitHub (sans cache),
+   et l'on se replie sur le canal brut si elle refuse (quota horaire). */
 async function lireJournal(){
-  const r = await fetch(XYLO_JOURNAL+"?t="+Date.now(), {cache:"no-store"});
-  if(!r.ok) throw new Error("journal HTTP "+r.status);
-  const txt = await r.text();
+  let txt = null;
+  try{
+    const r = await fetch(XYLO_JOURNAL_API+"?t="+Date.now(), {cache:"no-store", headers:{Accept:"application/vnd.github.raw+json"}});
+    if(r.ok) txt = await r.text();
+  }catch(e){ /* repli ci-dessous */ }
+  if(txt===null){
+    const r = await fetch(XYLO_JOURNAL+"?t="+Date.now(), {cache:"no-store"});
+    if(!r.ok) throw new Error("journal HTTP "+r.status);
+    txt = await r.text();
+  }
   const entrees = [];
   const re = /^## (\d{2})\/(\d{2})\/(\d{4}) — (.+?)\s*$/gm;
   let m;
@@ -356,7 +367,7 @@ async function verifierVeille(){
   }
 }
 
-/* Déclenche la veille puis attend son inscription au journal (jusqu'à 3 minutes). */
+/* Déclenche la veille puis attend son inscription au journal (jusqu'à 7 minutes). */
 async function lancerVeille(force){
   if(veilleEnCours) return;
   const avant = await lireJournal().catch(()=>[]);
@@ -375,10 +386,10 @@ async function lancerVeille(force){
       noter("Veille XYLO : terminée, "+(entrees[0].ecarts||"aucun")+" écart(s).");
       return;
     }
-    if(Date.now()-depart > 180000){
+    if(Date.now()-depart > 420000){
       veilleEnCours = false;
-      afficherVeille(entrees||avant, "La veille n'apparaît pas encore au journal : elle a peut-être échoué, ou le journal met du temps à se propager. Réessayez dans quelques minutes.");
-      noter("Veille XYLO : pas de confirmation après 3 minutes.");
+      afficherVeille(entrees||avant, "La veille n'apparaît pas au journal après sept minutes : elle a probablement échoué. Réessayez, ou consultez les journaux du service.");
+      noter("Veille XYLO : pas de confirmation après 7 minutes.");
       return;
     }
     E("eVeille").textContent = "Veille en cours… ("+Math.round((Date.now()-depart)/1000)+" s)";
