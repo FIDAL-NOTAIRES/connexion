@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Connexion — FIDAL Notaires</title>
+<title>MORNING — FIDAL Notaires</title>
 <meta name="description" content="Ouverture de journée : une seule autorisation Google, réutilisée ensuite par tous les outils du cabinet.">
 <meta name="theme-color" content="#0F2238">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Connexion">
+<meta name="apple-mobile-web-app-title" content="MORNING">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230F2238'/><path d='M10 17l5 5 8-11' fill='none' stroke='%23FFE764' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230F2238'/><path d='M56 96l28 28 45-62' fill='none' stroke='%23FFE764' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -37,6 +37,24 @@ main{max-width:760px;margin:0 auto}
 .heros{text-align:center;padding:26px 0 8px}
 .heros h1{font-size:34px;color:var(--jaune-forme);line-height:1.15}
 .heros p{color:var(--encre-faible);margin:10px auto 0;max-width:520px;font-size:14.5px;line-height:1.55}
+.heros .sous-titre{font-family:Georgia,serif;font-size:17px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.bloc{margin-top:26px;background:var(--carte);border:1px solid var(--trait);border-radius:16px;padding:18px 18px 16px}
+.bloc h2{font-size:17px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bloc h2 small{margin-left:auto;font-family:'Segoe UI',sans-serif;font-size:12px;color:var(--encre-faible);font-weight:400}
+.chantiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:6px}
+.chantier{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;border:1px solid var(--trait);border-radius:10px;font-size:12.5px;text-decoration:none;color:var(--encre);background:rgba(255,255,255,.02)}
+.chantier:hover{border-color:var(--cyan)}
+.chantier b{font-weight:600;font-size:11.5px;letter-spacing:.3px}
+.chantier .n{min-width:24px;text-align:center;border-radius:999px;padding:2px 7px;font-size:11.5px;font-weight:600;background:var(--cyan);color:var(--nuit)}
+.chantier .n.zero{background:rgba(255,255,255,.1);color:var(--encre-faible)}
+.chantier.termine{opacity:.55}
+.services{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.service{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--trait);border-radius:999px;font-size:12.5px;color:var(--encre);text-decoration:none}
+.service i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)}
+.service.ok i{background:#3CC97A;box-shadow:0 0 8px rgba(60,201,122,.6)}
+.service.ko i{background:var(--carmin);box-shadow:0 0 8px rgba(160,16,64,.7)}
+.service.attente i{background:var(--orange)}
+.reserve{margin-top:14px;font-size:12px;color:var(--encre-faible);font-style:italic}
 .action{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 0 8px}
 .btn{
   font:inherit;font-size:17px;font-weight:600;padding:15px 34px;border-radius:999px;cursor:pointer;
@@ -62,7 +80,8 @@ main{max-width:760px;margin:0 auto}
 .carte .detail b{color:var(--encre);font-weight:600}
 .liste{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
 .liste li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--trait)}
-.liste li span:last-child{color:var(--encre-faible);white-space:nowrap}
+.liste li span:first-child{flex:none}
+.liste li span:last-child{color:var(--encre-faible);text-align:right;min-width:0;overflow-wrap:anywhere}
 .liste li.vieux span:last-child{color:var(--orange)}
 .suite{margin-top:30px;border-top:1px solid var(--trait);padding-top:18px}
 .suite h2{font-size:15px;color:var(--encre-faible);letter-spacing:.4px;margin-bottom:12px}
@@ -90,9 +109,10 @@ main{max-width:760px;margin:0 auto}
 
 <main>
   <section class="heros">
-    <h1>Ouverture de journée</h1>
-    <p>Une seule autorisation Google, donnée ici le matin, suffit ensuite à tous les outils du cabinet
-       pour lire le Drive : CARTO, TRENTE et les suivants n'auront plus rien à demander.</p>
+    <h1>MORNING</h1>
+    <p class="sous-titre">Ouverture de journée</p>
+    <p>Un seul geste le matin : l'accord Google pour la journée, la veille des arrêtés, l'état des services
+       et des chantiers. Les outils du cabinet n'auront plus rien à demander.</p>
   </section>
 
   <div class="action">
@@ -119,16 +139,32 @@ main{max-width:760px;margin:0 auto}
     </article>
 
     <article class="carte" style="--c:var(--carmin)">
-      <h2><span class="voyant" id="vBases"></span>Bases préfectorales</h2>
-      <div class="etat" id="eBases">Lecture des dernières vérifications…</div>
-      <ul class="liste" id="lBases"></ul>
-      <div class="detail" id="dBases">La vérification elle-même sera branchée ici ; l'accord donné ce matin la couvrira.</div>
+      <h2><span class="voyant" id="vVeille"></span>Arrêtés préfectoraux</h2>
+      <div class="etat" id="eVeille">Lecture du journal de veille…</div>
+      <div class="detail" id="dVeille">Veille XYLO : termites, mérule et périmètres associés, comparés chaque jour à la cartographie Cerema.</div>
+      <ul class="liste" id="lVeille"></ul>
+      <div class="detail" style="margin-top:10px">
+        <button class="btn secondaire" id="btnVeille" type="button" style="font-size:12.5px;padding:7px 14px" hidden>Relancer la veille</button>
+      </div>
+      <div class="detail" style="margin-top:10px;opacity:.8">RISQUES et URBA interrogent Géorisques et le géoportail de l'urbanisme en direct : aucune base locale à rafraîchir le matin.</div>
     </article>
   </section>
 
   <div class="action" style="padding-top:18px">
     <button class="btn secondaire" id="btnRenouveler" type="button" hidden>Renouveler l'accès</button>
   </div>
+
+  <section class="bloc" id="bloc-chantiers">
+    <h2><span class="voyant" id="vChantiers"></span>Chantiers <small id="sChantiers">points restants lus sur le Drive après l'ouverture</small></h2>
+    <div class="etat" id="eChantiers" style="font-size:13px;color:var(--encre-faible)">En attente de l'accord Google.</div>
+    <div class="chantiers" id="lChantiers"></div>
+  </section>
+
+  <section class="bloc" id="bloc-services">
+    <h2><span class="voyant" id="vServices"></span>Services <small id="sServices">les applications de la suite répondent-elles ?</small></h2>
+    <div class="services" id="lServices"></div>
+    <div class="reserve">À venir ici, quand le lanceur les portera : les éléments à voir et le journal des incidents.</div>
+  </section>
 
   <section class="suite">
     <h2>Une fois la journée ouverte</h2>
@@ -200,7 +236,7 @@ function expirer(){
 async function connecter(interactif){
   E("mot").textContent = interactif ? "Ouverture de la fenêtre Google…" : "Reprise de l'accord déjà donné…";
   const j = await FidalAcces.jeton({interactif});
-  if(j){ await afficherConnexion(j); E("avisOrigine").hidden = true; return true; }
+  if(j){ await afficherConnexion(j); E("avisOrigine").hidden = true; if(interactif) lancerVeille(false); chargerChantiers(j); return true; }
   if(interactif){
     voyant("vDrive","ko");
     E("eDrive").textContent = "Connexion refusée ou fenêtre fermée.";
@@ -227,7 +263,7 @@ E("btnRenouveler").onclick = () => connecter(true);
     E("mot").textContent = "Dernière connexion : "+dateFr(etat.derniereConnexion)+" à "+heure(etat.derniereConnexion)+
                            (etat.compte ? " ("+etat.compte+")" : "")+".";
     const aujourdhui = dateFr(etat.derniereConnexion) === dateFr(Date.now());
-    if(aujourdhui){ await connecter(false); return; }
+    if(aujourdhui){ const ok = await connecter(false); if(ok) lancerVeille(false); return; }
   }
   E("mot").textContent = "Cliquez pour donner l'accord du jour.";
 })();
@@ -248,34 +284,185 @@ E("btnRenouveler").onclick = () => connecter(true);
   }
 })();
 
-/* ---------- Bases préfectorales : dates de dernière vérification ----------
-   Lues dans la base de réglages (outil « connexion », clé « bases ») :
-   { "xylo": {"nom":"Arrêtés termites et mérule", "date": 1789000000000}, ... } */
-const BASES_DEFAUT = {
-  xylo:    {nom:"Arrêtés termites et mérule (XYLO)"},
-  risques: {nom:"Zonages de risques (RISQUES)"},
-  urba:    {nom:"Documents d'urbanisme (URBA)"}
-};
-(async () => {
-  let bases = {};
+/* ---------- Arrêtés préfectoraux : la veille XYLO ----------
+   Le journal VEILLE.md du dépôt XYLO est public : on y lit la dernière moisson.
+   « Ouvrir la journée » déclenche la veille si elle n'a pas encore tourné
+   aujourd'hui (le cron Vercel est approximatif et saute parfois un jour) ;
+   la réponse du service n'est pas lisible depuis cette page (pas d'entête
+   d'origine croisée), on confirme donc en relisant le journal. La date est
+   ensuite notée dans la base de réglages (outil « connexion », clé « bases »). */
+const XYLO_VEILLE  = "https://xylo-phi.vercel.app/api/veille";
+const XYLO_JOURNAL = "https://raw.githubusercontent.com/FIDAL-NOTAIRES/xylo/main/VEILLE.md";
+const XYLO_JOURNAL_PAGE = "https://github.com/FIDAL-NOTAIRES/xylo/blob/main/VEILLE.md";
+const XYLO_INDEX = "https://xylo-phi.vercel.app/index-arretes.html";
+let veilleEnCours = false;
+
+async function lireJournal(){
+  const r = await fetch(XYLO_JOURNAL+"?t="+Date.now(), {cache:"no-store"});
+  if(!r.ok) throw new Error("journal HTTP "+r.status);
+  const txt = await r.text();
+  const entrees = [];
+  const re = /^## (\d{2})\/(\d{2})\/(\d{4}) — (.+?)\s*$/gm;
+  let m;
+  while((m = re.exec(txt))){
+    const date = new Date(+m[3], +m[2]-1, +m[1]).getTime();
+    const suite = txt.slice(m.index + m[0].length, m.index + m[0].length + 400);
+    const stats = (suite.match(/Moisson en ([\d.,]+) s · (\d+) départements, (\d+) communes/)||[]);
+    entrees.push({date, titre:m[4], secondes:stats[1]||null, departements:stats[2]||null, communes:stats[3]||null,
+                  ecarts: /aucun écart/.test(m[4]) ? 0 : (parseInt(m[4],10)||0)});
+  }
+  return entrees;
+}
+function memeJour(a,b){ return dateFr(a)===dateFr(b); }
+
+function afficherVeille(entrees, note){
+  const d = entrees[0];
+  const l = E("lVeille");
+  if(!d){ voyant("vVeille","ko"); E("eVeille").textContent = "Journal de veille vide ou illisible."; l.innerHTML=""; return; }
+  const age = Math.floor((Date.now()-d.date)/86400000);
+  const auj = memeJour(d.date, Date.now());
+  voyant("vVeille", auj ? "ok" : (age<=2 ? "attente" : "ko"));
+  E("eVeille").textContent = auj ? "Veille faite aujourd'hui." : (age===1 ? "Dernière veille hier." : "Dernière veille il y a "+age+" jours.");
+  l.innerHTML =
+    `<li><span>Moisson</span><span>${dateFr(d.date)}, ${d.ecarts ? d.ecarts+" écart(s)" : "aucun écart"}</span></li>`+
+    (d.communes ? `<li><span>Référentiel</span><span>${d.communes} communes, ${d.departements} dép.</span></li>` : "")+
+    `<li><span><a href="${XYLO_JOURNAL_PAGE}" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">Journal ↗</a></span><span><a href="${XYLO_INDEX}" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">Index des arrêtés ↗</a></span></li>`+
+    (note ? `<li><span style="color:var(--orange)">${note}</span><span></span></li>` : "");
+  E("btnVeille").hidden = false;
+  E("btnVeille").disabled = veilleEnCours;
+}
+
+async function noterBase(cle, info){
   try{
+    let bases = {};
     const r = await fetch(API+"?outil=connexion&cle=bases",{cache:"no-store"});
     if(r.ok){ const d = await r.json(); if(d && d.valeur && typeof d.valeur==="object") bases = d.valeur; }
-  }catch(e){ noter("Bases préfectorales : "+e.message); }
-  const cles = Object.keys(Object.assign({}, BASES_DEFAUT, bases));
-  const SEUIL = 30*24*3600*1000;   /* au-delà de trente jours, la date passe en orange */
-  let vieux = 0, jamais = 0;
-  E("lBases").innerHTML = cles.map(k => {
-    const b = Object.assign({}, BASES_DEFAUT[k]||{}, bases[k]||{});
-    const d = b.date ? Number(b.date) : 0;
-    if(!d) jamais++; else if(Date.now()-d > SEUIL) vieux++;
-    return `<li class="${d && Date.now()-d>SEUIL ? "vieux":""}"><span>${b.nom||k}</span><span>${d ? "vérifiée le "+dateFr(d) : "jamais vérifiée"}</span></li>`;
-  }).join("");
-  if(!cles.length){ E("eBases").textContent = "Aucune base déclarée."; return; }
-  if(jamais===cles.length){ voyant("vBases","attente"); E("eBases").textContent = "Aucune vérification enregistrée."; }
-  else if(vieux||jamais){ voyant("vBases","attente"); E("eBases").textContent = (vieux+jamais)+" base(s) à revérifier."; }
-  else { voyant("vBases","ok"); E("eBases").textContent = "Toutes les bases ont été vérifiées ce mois-ci."; }
-})();
+    bases[cle] = Object.assign({}, bases[cle]||{}, info, {controle: Date.now()});
+    await fetch(API+"?outil=connexion&cle=bases",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(bases)});
+    noter("Base de réglages : date de veille "+cle+" notée.");
+  }catch(e){ noter("Base de réglages : "+e.message); }
+}
+
+async function verifierVeille(){
+  try{
+    const entrees = await lireJournal();
+    afficherVeille(entrees);
+    if(entrees[0]) noterBase("xylo", {nom:"Arrêtés termites et mérule (XYLO)", date:entrees[0].date, ecarts:entrees[0].ecarts});
+    noter("Veille XYLO : dernière entrée du journal "+(entrees[0]?dateFr(entrees[0].date):"aucune")+".");
+    return entrees;
+  }catch(e){
+    voyant("vVeille","ko"); E("eVeille").textContent = "Journal de veille injoignable."; noter("Veille XYLO : "+e.message);
+    return null;
+  }
+}
+
+/* Déclenche la veille puis attend son inscription au journal (jusqu'à 3 minutes). */
+async function lancerVeille(force){
+  if(veilleEnCours) return;
+  const avant = await lireJournal().catch(()=>[]);
+  if(!force && avant[0] && memeJour(avant[0].date, Date.now())){ afficherVeille(avant); return; }
+  veilleEnCours = true;
+  voyant("vVeille","attente"); E("eVeille").textContent = "Veille en cours…"; E("btnVeille").disabled = true;
+  noter("Veille XYLO : déclenchement de "+XYLO_VEILLE);
+  try{ await fetch(XYLO_VEILLE, {mode:"no-cors", cache:"no-store"}); }catch(e){ noter("Veille XYLO : appel "+e.message); }
+  const depart = Date.now();
+  const attendre = async () => {
+    const entrees = await lireJournal().catch(()=>null);
+    if(entrees && entrees[0] && memeJour(entrees[0].date, Date.now()) && (!avant[0] || entrees[0].date!==avant[0].date || force && Date.now()-depart>20000)){
+      veilleEnCours = false;
+      afficherVeille(entrees);
+      noterBase("xylo", {nom:"Arrêtés termites et mérule (XYLO)", date:entrees[0].date, ecarts:entrees[0].ecarts});
+      noter("Veille XYLO : terminée, "+(entrees[0].ecarts||"aucun")+" écart(s).");
+      return;
+    }
+    if(Date.now()-depart > 180000){
+      veilleEnCours = false;
+      afficherVeille(entrees||avant, "La veille n'apparaît pas encore au journal : elle a peut-être échoué, ou le journal met du temps à se propager. Réessayez dans quelques minutes.");
+      noter("Veille XYLO : pas de confirmation après 3 minutes.");
+      return;
+    }
+    E("eVeille").textContent = "Veille en cours… ("+Math.round((Date.now()-depart)/1000)+" s)";
+    setTimeout(attendre, 15000);
+  };
+  setTimeout(attendre, 20000);
+}
+E("btnVeille").onclick = () => lancerVeille(true);
+
+/* ---------- Chantiers : les fichiers POINTS-<outil>.md lus sur le Drive ----------
+   Même convention que CARTO : une ligne « - [ ] » par point à faire. On compte
+   les points restants par outil et on renvoie vers CARTO pour le détail. */
+const OUTILS_NOMS = {
+  "fidal-apps":"FIDAL Apps", marteau:"MARTEAU", fusion:"FUSION", countdown:"COUNTDOWN", redpar:"REDPAR", urba:"URBA",
+  xylo:"XYLO", trente:"TRENTE", matrice:"MATRICE", certif:"CERTIF", risques:"RISQUES", paint:"PAINT", plume:"PLUME",
+  "depot-capital":"DÉPÔT DE CAPITAL", apostille:"APOSTILLE", "delais-immo":"DÉLAIS-IMMO", "pret-particulier":"PRÊT PARTICULIER",
+  "pret-pro":"PRÊT PRO", prix:"PRIX", attente:"ATTENTE", radio:"RADIO", presse:"PRESSE", partage:"PARTAGE AMIABLE",
+  consult:"CONSULT", "plateforme-avocats":"PLATEFORME AVOCATS"
+};
+const CARTO = "https://fidal-apps.vercel.app/carto.html";
+async function chargerChantiers(jeton){
+  voyant("vChantiers","attente"); E("eChantiers").textContent = "Lecture des fichiers de points…";
+  try{
+    const u = new URL("https://www.googleapis.com/drive/v3/files");
+    u.searchParams.set("q","name contains 'POINTS-' and trashed = false");
+    u.searchParams.set("fields","files(id,name,modifiedTime)");
+    u.searchParams.set("pageSize","200");
+    u.searchParams.set("corpora","allDrives"); u.searchParams.set("supportsAllDrives","true"); u.searchParams.set("includeItemsFromAllDrives","true");
+    const r = await fetch(u,{headers:{Authorization:"Bearer "+jeton}});
+    if(!r.ok) throw new Error("Drive "+r.status);
+    const fichiers = ((await r.json()).files||[]).filter(f=>/^POINTS-[a-z0-9-]+\.md$/i.test(f.name));
+    const parOutil = {};
+    fichiers.forEach(f=>{ const id=f.name.replace(/^POINTS-/i,"").replace(/\.md$/i,"").toLowerCase(); if(!parOutil[id]||f.modifiedTime>parOutil[id].modifiedTime) parOutil[id]=f; });
+    const lignes = await Promise.all(Object.entries(parOutil).map(async ([id,f])=>{
+      try{
+        const t = await (await fetch("https://www.googleapis.com/drive/v3/files/"+f.id+"?alt=media",{headers:{Authorization:"Bearer "+jeton}})).text();
+        const reste = (t.match(/^\s*[-*]\s*\[ \]\s*\S/gm)||[]).length;
+        const faits = (t.match(/^\s*[-*]\s*\[[xX]\]\s*\S/gm)||[]).length;
+        return {id, nom:OUTILS_NOMS[id]||id.toUpperCase(), reste, faits};
+      }catch(e){ return null; }
+    }));
+    const ok = lignes.filter(Boolean).sort((a,b)=>b.reste-a.reste || a.nom.localeCompare(b.nom,"fr"));
+    const total = ok.reduce((n,l)=>n+l.reste,0);
+    E("lChantiers").innerHTML = ok.map(l=>`<a class="chantier ${l.reste?"":"termine"}" href="${CARTO}" target="_blank" rel="noopener" title="${l.faits} point(s) réalisé(s)"><b>${l.nom}</b><span class="n ${l.reste?"":"zero"}">${l.reste}</span></a>`).join("");
+    voyant("vChantiers", total ? "ok" : "ok");
+    E("eChantiers").textContent = ok.length ? `${total} point${total>1?"s":""} restant${total>1?"s":""} sur ${ok.length} outils — le détail est dans CARTO.` : "Aucun fichier de points trouvé sur le Drive.";
+    E("sChantiers").textContent = "lus à "+heure(Date.now());
+    noter("Chantiers : "+ok.length+" fichiers de points, "+total+" points restants.");
+  }catch(e){
+    voyant("vChantiers","ko"); E("eChantiers").textContent = "Lecture impossible ("+e.message+")."; noter("Chantiers : "+e.message);
+  }
+}
+
+/* ---------- Services : les applications répondent-elles ? ----------
+   Un appel sans lecture de la réponse (les applications n'autorisent pas
+   l'origine croisée) : il échoue seulement si le service est injoignable. */
+const SERVICES = [
+  ["FIDAL Apps","https://fidal-apps.vercel.app/"],["MARTEAU","https://marteau-rho.vercel.app/"],["FUSION","https://fusion-three-kappa.vercel.app/"],
+  ["COUNTDOWN","https://countdown-kappa-azure.vercel.app/"],["REDPAR","https://redpar-frontend.vercel.app/"],["URBA","https://urba-lemon.vercel.app/"],
+  ["XYLO","https://xylo-phi.vercel.app/"],["TRENTE","https://trente.vercel.app/"],["MATRICE","https://matrice-black.vercel.app/"],
+  ["CERTIF","https://certif-bay.vercel.app/"],["RISQUES","https://risques.vercel.app/"],["PAINT","https://paint-blue.vercel.app/"],
+  ["PLUME","https://plume-mocha.vercel.app/"],["PRÊT PART.","https://pret-particulier.vercel.app/"],["PRÊT PRO","https://pret-pro.vercel.app/"],
+  ["PRIX","https://prix-mu.vercel.app/"],["ATTENTE","https://attente.vercel.app/"],["PARTAGE","https://partage-amiable.vercel.app/"],["CONSULT","https://consult-sand.vercel.app/"]
+];
+async function verifierServices(){
+  const l = E("lServices");
+  l.innerHTML = SERVICES.map(([n,u],i)=>`<a class="service attente" id="svc${i}" href="${u}" target="_blank" rel="noopener"><i></i>${n}</a>`).join("");
+  voyant("vServices","attente");
+  let ko = 0;
+  await Promise.all(SERVICES.map(async ([n,u],i)=>{
+    const el = E("svc"+i);
+    try{
+      const ctl = new AbortController(); const t = setTimeout(()=>ctl.abort(), 12000);
+      await fetch(u, {mode:"no-cors", cache:"no-store", signal:ctl.signal});
+      clearTimeout(t); el.className = "service ok";
+    }catch(e){ ko++; el.className = "service ko"; el.title = "injoignable"; noter("Service "+n+" : injoignable"); }
+  }));
+  voyant("vServices", ko ? "ko" : "ok");
+  E("sServices").textContent = ko ? ko+" service(s) injoignable(s) — vérifiés à "+heure(Date.now()) : SERVICES.length+" services joignables — vérifiés à "+heure(Date.now());
+}
+verifierServices();
+
+/* au chargement : lecture seule du journal ; la veille se déclenche avec l'ouverture de la journée */
+verifierVeille();
 </script>
 </body>
 </html>
