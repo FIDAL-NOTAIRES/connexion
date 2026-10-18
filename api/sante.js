@@ -10,7 +10,11 @@
      la sonde fait la même requête que RISQUES (une carte de 64 px) et exige une vraie image.
    - RISQUES n'a pas de page d'accueil (dépôt api/ seul) : son 404 à la racine est normal et n'est pas signalé.
    Reprise : ?services=A,B ne rappelle que ces services (la page relance ainsi ceux qui n'ont pas répondu du premier coup).
+   INCIDENTS (18/10/2026) : quand DATABASE_URL est posée, la fonction tient le journal commun des incidents (api/incidents.js) : un service ou une source muet
+   n'ouvre un incident que sur l'appel de REPRISE (?reprise=1, deuxième essai demandé par la page : « deux essais ratés avant de déclarer une panne franche ») ;
+   tout élément qui répond clôt son incident en cours, dès le premier appel. Sans base, rien n'est écrit et rien ne casse.
    Aucune donnée personnelle, aucun secret : uniquement des adresses publiques. */
+const incidents = require("./incidents.js");
 
 const DELAI_MS = 8000, LENT_MS = 5000;
 
@@ -88,12 +92,29 @@ async function sonderSource([nom, url, extra]) {
   return { nom, url, etat: !repond ? "ko" : r.ms >= LENT_MS ? "lent" : "ok", ms: r.ms, ...(r.code ? { code: r.code } : {}), ...(erreur ? { erreur } : {}) };
 }
 
+/* Journal commun : un muet CONFIRMÉ (reprise) ouvre ; tout ce qui répond clôt. Les erreurs de base sont avalées : la santé prime sur la tenue du journal. */
+async function rapporter(services, sources, confirme, sql) {
+  const bilan = { ouverts: [], clos: 0 };
+  const lots = [["service", services], ["source", sources]];
+  for (const [nature, liste] of lots) {
+    const bons = liste.filter(x => x.etat !== "ko").map(x => x.nom);
+    if (bons.length) bilan.clos += await incidents.clore(bons, nature, sql);
+    if (confirme) for (const x of liste.filter(y => y.etat === "ko")) {
+      const r = await incidents.ouvrir(x.nom, nature, x.erreur || (x.code ? "HTTP " + x.code : "injoignable"), sql);
+      if (r) bilan.ouverts.push({ outil: x.nom, nature, action: r.action });
+    }
+  }
+  return bilan;
+}
+
 async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  const filtre = String(req.query?.services || "").split(",").map(s => s.trim()).filter(Boolean);
-  const choisis = SERVICES.filter(s => !filtre.length || filtre.includes(s[0]));
-  const [services, sources] = await Promise.all([Promise.all(choisis.map(sonderService)), filtre.length ? Promise.resolve([]) : Promise.all(SOURCES.map(sonderSource))]);
-  res.status(200).json({ verifie_le: new Date().toISOString(), services, sources });
+  const filtre = String(req.query?.services || "").split(",").map(s => s.trim()).filter(Boolean), confirme = String(req.query?.reprise || "") === "1";
+  const choisis = SERVICES.filter(s => !filtre.length || filtre.includes(s[0])), sourcesChoisies = SOURCES.filter(s => !filtre.length || filtre.includes(s[0]));
+  const [services, sources] = await Promise.all([Promise.all(choisis.map(sonderService)), Promise.all(sourcesChoisies.map(sonderSource))]);
+  const sortie = { verifie_le: new Date().toISOString(), services, sources };
+  if (process.env.DATABASE_URL) { try { sortie.incidents = await rapporter(services, sources, confirme); } catch (e) { sortie.incidents = { erreur: "journal indisponible" }; } }
+  res.status(200).json(sortie);
 }
 module.exports = handler;
-module.exports._interne = { SERVICES, SOURCES, sonder, etatDe, sonderService, sonderSource, lireMoneta, LENT_MS, DELAI_MS };
+module.exports._interne = { SERVICES, SOURCES, sonder, etatDe, sonderService, sonderSource, lireMoneta, rapporter, LENT_MS, DELAI_MS };
