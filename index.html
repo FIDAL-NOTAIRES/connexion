@@ -54,6 +54,15 @@ main{max-width:760px;margin:0 auto}
 .service.ok i{background:#3CC97A;box-shadow:0 0 8px rgba(60,201,122,.6)}
 .service.ko i{background:var(--carmin);box-shadow:0 0 8px rgba(160,16,64,.7)}
 .service.attente i{background:var(--orange)}
+.service.lent i,.service.degrade i,.service.attention i{background:var(--orange);box-shadow:0 0 8px rgba(255,152,45,.6)}
+.service.protege i{background:var(--cyan)}
+.sante{margin-top:10px;font-size:12.5px;line-height:1.5}
+.sante .l{padding:4px 0;border-bottom:1px dotted var(--trait)}
+.sante .l.ko{color:#FF9BB3}
+.sante .l.attention,.sante .l.degrade,.sante .l.lent{color:var(--orange)}
+.sante .l.info{color:var(--encre-faible)}
+.sous{font-size:13px;margin:16px 0 4px;color:var(--encre-faible);font-weight:600;display:flex;align-items:baseline;gap:10px}
+.sous small{font-weight:400;font-size:12px}
 .reserve{margin-top:14px;font-size:12px;color:var(--encre-faible);font-style:italic}
 .action{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 0 8px}
 .btn{
@@ -163,6 +172,9 @@ main{max-width:760px;margin:0 auto}
   <section class="bloc" id="bloc-services">
     <h2><span class="voyant" id="vServices"></span>Services <small id="sServices">les applications de la suite répondent-elles ?</small></h2>
     <div class="services" id="lServices"></div>
+    <div class="sante" id="sSante"></div>
+    <h3 class="sous">Sources de données <small id="sSources">les services publics dont dépend la suite</small></h3>
+    <div class="services" id="lSources"></div>
     <div class="reserve">À venir ici, quand le lanceur les portera : les éléments à voir et le journal des incidents.</div>
   </section>
 
@@ -170,7 +182,7 @@ main{max-width:760px;margin:0 auto}
     <h2>Une fois la journée ouverte</h2>
     <div class="raccourcis">
       <a href="https://fidal-apps.vercel.app/" target="_blank" rel="noopener"><i>◉</i>FIDAL Apps</a>
-      <a href="https://fidal-apps.vercel.app/carto.html" target="_blank" rel="noopener"><i>✦</i>CARTO</a>
+      <a href="https://carto-six.vercel.app/" target="_blank" rel="noopener"><i>✦</i>CARTO</a>
       <a href="https://trente.vercel.app/" target="_blank" rel="noopener"><i>⌂</i>TRENTE</a>
       <a href="https://fusion-three-kappa.vercel.app/" target="_blank" rel="noopener"><i>⧉</i>FUSION</a>
       <a href="https://marteau-rho.vercel.app/" target="_blank" rel="noopener"><i>⚒</i>MARTEAU</a>
@@ -409,7 +421,7 @@ const OUTILS_NOMS = {
   "pret-pro":"PRÊT PRO", prix:"PRIX", attente:"ATTENTE", radio:"RADIO", presse:"PRESSE", partage:"PARTAGE AMIABLE",
   consult:"CONSULT", "plateforme-avocats":"PLATEFORME AVOCATS"
 };
-const CARTO = "https://fidal-apps.vercel.app/carto.html";
+const CARTO = "https://carto-six.vercel.app/";
 async function chargerChantiers(jeton){
   voyant("vChantiers","attente"); E("eChantiers").textContent = "Lecture des fichiers de points…";
   try{
@@ -443,32 +455,88 @@ async function chargerChantiers(jeton){
   }
 }
 
-/* ---------- Services : les applications répondent-elles ? ----------
-   Un appel sans lecture de la réponse (les applications n'autorisent pas
-   l'origine croisée) : il échoue seulement si le service est injoignable. */
+/* ---------- Services et sources : la fonction serveur /api/sante les interroge (3.0, 18/10/2026) ----------
+   La page ne peut pas lire les réponses des autres applications (origines croisées) ; la fonction, côté serveur, le fait et rend le détail :
+   code et durée de chaque service, état publié par MONETA, réponse des sources publiques. Les services injoignables sont rappelés une fois.
+   Si la fonction ne répond pas, repli sur l'ancien appel direct, en deux essais de vingt secondes (un réveil lent n'est pas une panne). */
 const SERVICES = [
-  ["FIDAL Apps","https://fidal-apps.vercel.app/"],["MARTEAU","https://marteau-rho.vercel.app/"],["FUSION","https://fusion-three-kappa.vercel.app/"],
+  ["FIDAL Apps","https://fidal-apps.vercel.app/"],["CARTO","https://carto-six.vercel.app/"],["MARTEAU","https://marteau-rho.vercel.app/"],["FUSION","https://fusion-three-kappa.vercel.app/"],
   ["COUNTDOWN","https://countdown-kappa-azure.vercel.app/"],["REDPAR","https://redpar-frontend.vercel.app/"],["URBA","https://urba-lemon.vercel.app/"],
   ["XYLO","https://xylo-phi.vercel.app/"],["TRENTE","https://trente.vercel.app/"],["MATRICE","https://matrice-black.vercel.app/"],
   ["CERTIF","https://certif-bay.vercel.app/"],["RISQUES","https://risques.vercel.app/"],["PAINT","https://paint-blue.vercel.app/"],
   ["PLUME","https://plume-mocha.vercel.app/"],["PRÊT PART.","https://pret-particulier.vercel.app/"],["PRÊT PRO","https://pret-pro.vercel.app/"],
-  ["PRIX","https://prix-mu.vercel.app/"],["ATTENTE","https://attente.vercel.app/"],["PARTAGE","https://partage-amiable.vercel.app/"],["CONSULT","https://consult-sand.vercel.app/"]
+  ["PRIX","https://prix-mu.vercel.app/"],["ATTENTE","https://attente.vercel.app/"],["PARTAGE","https://partage-amiable.vercel.app/"],["CONSULT","https://consult-sand.vercel.app/"],
+  ["HISTO","https://histo-sand.vercel.app/"],["MONETA","https://moneta-navy.vercel.app/"],["COPRO","https://copro-sigma.vercel.app/"]
 ];
-async function verifierServices(){
-  const l = E("lServices");
-  l.innerHTML = SERVICES.map(([n,u],i)=>`<a class="service attente" id="svc${i}" href="${u}" target="_blank" rel="noopener"><i></i>${n}</a>`).join("");
-  voyant("vServices","attente");
+const LIBELLE_ETAT = { ok:"répond", lent:"répond lentement", protege:"joignable (protégé)", attention:"à voir", degrade:"dégradé", ko:"injoignable" };
+const UTILISE_PAR = { "Adresse (BAN)":"RISQUES", "Cadastre (API Carto IGN)":"RISQUES", "Géoportail (WMS)":"RISQUES", "Géorisques (API)":"RISQUES", "BRGM (WMS Géorisques)":"RISQUES", "API Claude":"MONETA, FUSION, TRENTE" };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pluriel = (n, un, plusieurs) => n+" "+(n>1 ? plusieurs : un);
+const gravite = e => e==="ko" ? 3 : (e==="degrade"||e==="attention"||e==="lent") ? 2 : 0;
+
+async function appelSante(noms){
+  const ctl = new AbortController(), t = setTimeout(()=>ctl.abort(), 30000);
+  try{
+    const r = await fetch("/api/sante"+(noms ? "?services="+encodeURIComponent(noms.join(",")) : ""), {cache:"no-store", signal:ctl.signal});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const j = await r.json(); if(!Array.isArray(j.services)) throw new Error("réponse inattendue");
+    return j;
+  } finally { clearTimeout(t); }
+}
+function puce(s){
+  const titre = LIBELLE_ETAT[s.etat]+" — "+(s.code ? "HTTP "+s.code+", " : "")+s.ms+" ms"+(s.erreur ? " — "+s.erreur : "");
+  return `<a class="service ${s.etat}" href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(titre)}"><i></i>${esc(s.nom)}</a>`;
+}
+function dessinerSante(j, definitif = true){
+  const S = j.services, R = j.sources || [], lignes = [];
+  E("lServices").innerHTML = S.map(puce).join("");
+  E("lSources").innerHTML = R.map(r => `<span class="service ${r.etat}" title="${esc(LIBELLE_ETAT[r.etat]+" — "+(r.code ? "HTTP "+r.code+", " : "")+r.ms+" ms"+(r.erreur ? " — "+r.erreur : ""))}"><i></i>${esc(r.nom)}</span>`).join("");
+  for(const s of S){
+    if(s.etat==="ko") lignes.push(["ko","✖ "+s.nom+" — injoignable : "+(s.erreur || "HTTP "+s.code)]);
+    else if(s.etat==="lent") lignes.push(["lent","⏱ "+s.nom+" — lent : "+s.ms+" ms (réveil à froid probable)"]);
+    else if(s.etat==="attention" && !s.detail) lignes.push(["attention","⚠ "+s.nom+" — page d'accueil introuvable (HTTP "+s.code+")"]);
+    for(const d of (s.detail||[])) lignes.push([d.niveau==="ok" ? "info" : d.niveau, (d.niveau==="ok" ? "• " : d.niveau==="ko" ? "✖ " : "⚠ ")+s.nom+" — "+d.texte]);
+  }
+  for(const r of R) if(r.etat!=="ok") lignes.push([r.etat==="ko" ? "ko" : "lent", (r.etat==="ko" ? "✖ " : "⏱ ")+r.nom+" — "+(r.etat==="ko" ? "ne répond pas : "+(r.erreur || "HTTP "+r.code) : "lent : "+r.ms+" ms")+" (utilisée notamment par "+(UTILISE_PAR[r.nom]||"la suite")+")"]);
+  E("sSante").innerHTML = lignes.map(([c,t])=>`<div class="l ${c}">${esc(t)}</div>`).join("");
+  const tous = [...S, ...R], ko = tous.filter(x=>x.etat==="ko").length, a_voir = tous.filter(x=>gravite(x.etat)===2).length;
+  voyant("vServices", ko ? "ko" : a_voir ? "attente" : "ok");
+  const parties = [pluriel(S.length,"service","services")+" · "+pluriel(R.length,"source","sources")];
+  if(ko) parties.push(pluriel(ko,"muet","muets")); if(a_voir) parties.push(pluriel(a_voir,"à voir","à voir"));
+  E("sServices").textContent = parties.join(" · ")+(ko||a_voir ? "" : " · tout répond")+" — vérifié à "+heure(Date.now());
+  const rok = R.filter(r=>r.etat!=="ko").length; E("sSources").textContent = R.length ? rok+" sur "+R.length+" répondent" : "";
+  if(definitif) for(const [c,t] of lignes) if(c==="ko"||c==="attention"||c==="degrade"||c==="lent") noter("Santé : "+t);
+}
+async function pingDirect(u){
+  for(let essai=1; essai<=2; essai++){
+    try{ const ctl = new AbortController(), t = setTimeout(()=>ctl.abort(), 20000); await fetch(u, {mode:"no-cors", cache:"no-store", signal:ctl.signal}); clearTimeout(t); return true; }catch(e){}
+  }
+  return false;
+}
+async function verifierServicesDirect(){
   let ko = 0;
   await Promise.all(SERVICES.map(async ([n,u],i)=>{
-    const el = E("svc"+i);
-    try{
-      const ctl = new AbortController(); const t = setTimeout(()=>ctl.abort(), 12000);
-      await fetch(u, {mode:"no-cors", cache:"no-store", signal:ctl.signal});
-      clearTimeout(t); el.className = "service ok";
-    }catch(e){ ko++; el.className = "service ko"; el.title = "injoignable"; noter("Service "+n+" : injoignable"); }
+    const el = E("svc"+i), bon = await pingDirect(u);
+    el.className = "service "+(bon ? "ok" : "ko"); if(!bon){ ko++; el.title = "injoignable"; noter("Service "+n+" : injoignable"); }
   }));
   voyant("vServices", ko ? "ko" : "ok");
-  E("sServices").textContent = ko ? ko+" service(s) injoignable(s) — vérifiés à "+heure(Date.now()) : SERVICES.length+" services joignables — vérifiés à "+heure(Date.now());
+  E("sServices").textContent = (ko ? ko+" service(s) injoignable(s)" : SERVICES.length+" services joignables")+" — vérifiés à "+heure(Date.now())+" (sondage direct : le détail n'est pas disponible)";
+}
+async function verifierServices(){
+  E("lServices").innerHTML = SERVICES.map(([n,u],i)=>`<a class="service attente" id="svc${i}" href="${u}" target="_blank" rel="noopener"><i></i>${n}</a>`).join("");
+  voyant("vServices","attente");
+  let j;
+  try{ j = await appelSante(); }
+  catch(e){ noter("Santé : fonction serveur indisponible ("+e.message+"), repli sur le sondage direct"); return verifierServicesDirect(); }
+  const ko = j.services.filter(s=>s.etat==="ko").map(s=>s.nom);
+  dessinerSante(j, !ko.length);   // le premier résultat s'affiche tout de suite
+  if(ko.length){   // une seconde chance aux services muets, puis mise à jour
+    try{
+      await new Promise(r=>setTimeout(r, 2000));
+      for(const s2 of (await appelSante(ko)).services){ const i = j.services.findIndex(s=>s.nom===s2.nom); if(i>=0) j.services[i] = s2; }
+    }catch(e){ noter("Santé : reprise impossible ("+e.message+")"); }
+    dessinerSante(j);
+  }
 }
 verifierServices();
 
