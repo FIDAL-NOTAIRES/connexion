@@ -1,0 +1,6 @@
+{
+  "regions": ["cdg1"],
+  "functions": {
+    "api/sante.js": { "maxDuration": 30 }
+  }
+}
