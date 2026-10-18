@@ -12,6 +12,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230F2238'/><path d='M10 17l5 5 8-11' fill='none' stroke='%23FFE764' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230F2238'/><path d='M56 96l28 28 45-62' fill='none' stroke='%23FFE764' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="/bandeau.js" defer></script>
 <script src="./acces.js"></script>
 <style>
 :root{
@@ -477,7 +478,7 @@ const gravite = e => e==="ko" ? 3 : (e==="degrade"||e==="attention"||e==="lent")
 async function appelSante(noms){
   const ctl = new AbortController(), t = setTimeout(()=>ctl.abort(), 30000);
   try{
-    const r = await fetch("/api/sante"+(noms ? "?services="+encodeURIComponent(noms.join(",")) : ""), {cache:"no-store", signal:ctl.signal});
+    const r = await fetch("/api/sante"+(noms ? "?reprise=1&services="+encodeURIComponent(noms.join(",")) : ""), {cache:"no-store", signal:ctl.signal});
     if(!r.ok) throw new Error("HTTP "+r.status);
     const j = await r.json(); if(!Array.isArray(j.services)) throw new Error("réponse inattendue");
     return j;
@@ -528,12 +529,14 @@ async function verifierServices(){
   let j;
   try{ j = await appelSante(); }
   catch(e){ noter("Santé : fonction serveur indisponible ("+e.message+"), repli sur le sondage direct"); return verifierServicesDirect(); }
-  const ko = j.services.filter(s=>s.etat==="ko").map(s=>s.nom);
+  const ko = [...j.services.filter(s=>s.etat==="ko"), ...(j.sources||[]).filter(r=>r.etat==="ko")].map(s=>s.nom);
   dessinerSante(j, !ko.length);   // le premier résultat s'affiche tout de suite
-  if(ko.length){   // une seconde chance aux services muets, puis mise à jour
+  if(ko.length){   // une seconde chance aux muets (services ET sources), puis mise à jour ; c'est cet appel de reprise qui déclare l'incident au journal commun
     try{
       await new Promise(r=>setTimeout(r, 2000));
-      for(const s2 of (await appelSante(ko)).services){ const i = j.services.findIndex(s=>s.nom===s2.nom); if(i>=0) j.services[i] = s2; }
+      const j2 = await appelSante(ko);
+      for(const s2 of j2.services){ const i = j.services.findIndex(s=>s.nom===s2.nom); if(i>=0) j.services[i] = s2; }
+      for(const r2 of (j2.sources||[])){ const i = (j.sources||[]).findIndex(r=>r.nom===r2.nom); if(i>=0) j.sources[i] = r2; }
     }catch(e){ noter("Santé : reprise impossible ("+e.message+")"); }
     dessinerSante(j);
   }

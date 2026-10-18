@@ -1,0 +1,12 @@
+{
+  "name": "connexion",
+  "version": "1.1.0",
+  "private": true,
+  "description": "MORNING — connexion du matin, page de santé de la suite, incidents communs.",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}
