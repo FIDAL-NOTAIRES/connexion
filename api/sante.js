@@ -37,7 +37,8 @@ const SERVICES = [
   ["PAINT", "https://paint-blue.vercel.app/"], ["PLUME", "https://plume-mocha.vercel.app/"], ["PRÊT PART.", "https://pret-particulier.vercel.app/"],
   ["PRÊT PRO", "https://pret-pro.vercel.app/"], ["PRIX", "https://prix-mu.vercel.app/"], ["ATTENTE", "https://attente.vercel.app/"],
   ["PARTAGE", "https://partage-amiable.vercel.app/"], ["CONSULT", "https://consult-sand.vercel.app/"], ["HISTO", "https://histo-sand.vercel.app/"],
-  ["MONETA", "https://moneta-navy.vercel.app/", { statut: "https://moneta-navy.vercel.app/api/moteurs", lire: lireMoneta }], ["COPRO", "https://copro-sigma.vercel.app/"]
+  ["MONETA", "https://moneta-navy.vercel.app/", { statut: "https://moneta-navy.vercel.app/api/moteurs", lire: lireMoneta }], ["COPRO", "https://copro-sigma.vercel.app/"],
+  ["COFFEE", "https://coffee-taupe-gamma.vercel.app/"], ["PHARE", "https://phare-ashy.vercel.app/"], ["TAXVÉRIF-PARTICULIER", "https://taxverif-particulier.vercel.app/"]
 ];
 
 const SOURCES = [
