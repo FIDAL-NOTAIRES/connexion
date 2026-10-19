@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Journal des incidents — FIDAL</title>
+<style>
+  :root{--nuit:#0F2238;--canard:#33838B;--orange:#FF982D;--carmin:#A01040;--cyan:#6DD5DC;--trait:#d6dde2;--fond:#f4f6f8;--doux:#5b6b7a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fond);color:var(--nuit);font:14px/1.45 "Segoe UI",system-ui,sans-serif}
+  header{background:var(--nuit);color:#fff;padding:14px 22px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  header h1{margin:0;font:700 20px Georgia,serif}
+  header small{color:var(--cyan)}
+  main{max-width:1100px;margin:0 auto;padding:18px 22px 60px}
+  .acces{max-width:420px;margin:60px auto;background:#fff;border:1px solid var(--trait);border-radius:8px;padding:22px}
+  .acces h2{margin:0 0 6px;font:700 18px Georgia,serif}
+  .acces p{color:var(--doux);margin:0 0 12px}
+  input,select,button{font:inherit}
+  input,select{padding:7px 9px;border:1px solid var(--trait);border-radius:5px;background:#fff;color:var(--nuit)}
+  button{padding:7px 14px;border:0;border-radius:5px;background:var(--canard);color:#fff;font-weight:600;cursor:pointer}
+  button.discret{background:#fff;color:var(--canard);border:1px solid var(--canard)}
+  .filtres{display:flex;gap:10px;flex-wrap:wrap;align-items:end;background:#fff;border:1px solid var(--trait);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+  .filtres label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--doux)}
+  .compte{margin:6px 2px 10px;color:var(--doux)}
+  .tableau{overflow-x:auto;background:#fff;border:1px solid var(--trait);border-radius:8px}
+  table{border-collapse:collapse;width:100%;min-width:760px}
+  th{background:#eef2f5;text-align:left;font-size:12px;color:var(--doux);padding:8px 10px;white-space:nowrap}
+  td{padding:8px 10px;border-top:1px solid #edf0f3;vertical-align:top}
+  .pastille{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600}
+  .encours{background:#fbe3ea;color:var(--carmin)} .clos{background:#e3f3ee;color:#1d6b55}
+  .vide,.erreur{padding:22px;text-align:center;color:var(--doux)} .erreur{color:var(--carmin)}
+  .pied{display:flex;justify-content:center;margin:14px 0}
+  .quitter{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.5)}
+</style>
+</head>
+<body>
+<header><h1>Journal des incidents</h1><small>consultation réservée à l'administrateur, à l'écran uniquement</small><button id="quitter" class="quitter" hidden>Verrouiller</button></header>
+<main>
+  <section id="acces" class="acces">
+    <h2>Accès réservé</h2><p>Saisissez le code de l'administrateur.</p>
+    <form id="formCode"><input id="code" type="password" autocomplete="current-password" placeholder="Code" aria-label="Code d'accès" style="width:100%;margin-bottom:10px"><button type="submit">Ouvrir le journal</button></form>
+    <p id="msgCode" class="erreur" style="padding:10px 0 0;text-align:left" hidden></p>
+  </section>
+  <section id="journal" hidden>
+    <div class="filtres">
+      <label>Outil<select id="fOutil"><option value="">Tous</option></select></label>
+      <label>Type<select id="fNature"><option value="">Tous</option></select></label>
+      <label>État<select id="fEtat"><option value="">Tous</option><option value="en_cours">En cours</option><option value="clos">Clos</option></select></label>
+      <label>Du<input id="fDu" type="date"></label>
+      <label>Au<input id="fAu" type="date"></label>
+      <button id="effacer" class="discret" type="button">Tout afficher</button>
+    </div>
+    <p id="compte" class="compte"></p>
+    <div class="tableau"><table><thead><tr><th>Début</th><th>Fin</th><th>Durée</th><th>Outil</th><th>Type</th><th>Coupures</th><th>Cause relevée</th></tr></thead><tbody id="corps"></tbody></table><div id="vide" class="vide" hidden>Aucun incident ne correspond à ces filtres.</div></div>
+    <div class="pied"><button id="plus" class="discret" hidden>Afficher les incidents plus anciens</button></div>
+  </section>
+</main>
+<script>
+(function(){
+  var CLE = "fidal.journal.code", API = "/api/journal", LIB = { service: "outil", source: "source de données", base: "base de données", drive: "Drive" };
+  var $ = function(id){ return document.getElementById(id); }, lignes = [], total = 0, etatFiltres = null;
+  var esc = function(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); };
+  var quand = function(iso){ if(!iso) return "—"; var d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" }); };
+  var duree = function(s){ s = Math.max(0, Number(s) || 0); if(s < 60) return "moins d'une minute"; var m = Math.round(s / 60); if(m < 60) return m + " min"; var h = Math.floor(m / 60); if(h < 48) return h + " h " + String(m % 60).padStart(2, "0"); return Math.round(h / 24) + " jours"; };
+  var code = function(){ try { return sessionStorage.getItem(CLE) || ""; } catch(e){ return ""; } };
+  function filtres(decalage){
+    var p = new URLSearchParams(); [["outil","fOutil"],["nature","fNature"],["etat","fEtat"],["du","fDu"],["au","fAu"]].forEach(function(c){ var v = $(c[1]).value; if(v) p.set(c[0], v); });
+    p.set("limite", "100"); p.set("decalage", String(decalage || 0)); return p.toString();
+  }
+  function montrerAcces(msg){ $("journal").hidden = true; $("quitter").hidden = true; $("acces").hidden = false; if(msg){ $("msgCode").textContent = msg; $("msgCode").hidden = false; } else $("msgCode").hidden = true; }
+  async function charger(ajout){
+    var r = await fetch(API + "?" + filtres(ajout ? lignes.length : 0), { headers: { "x-journal-code": code() }, cache: "no-store" });
+    if(r.status === 401){ try { sessionStorage.removeItem(CLE); } catch(e){} return montrerAcces("Code incorrect."); }
+    if(r.status === 503){ var e = await r.json().catch(function(){ return {}; }); return montrerAcces(e.erreur || "Journal indisponible."); }
+    if(!r.ok){ $("compte").textContent = "Lecture impossible pour le moment."; return; }
+    var j = await r.json(); total = j.total;
+    lignes = ajout ? lignes.concat(j.incidents) : j.incidents;
+    $("acces").hidden = true; $("journal").hidden = false; $("quitter").hidden = false;
+    peupler("fOutil", j.outils, "Tous", function(x){ return x; }); peupler("fNature", j.natures, "Tous", function(x){ return LIB[x] || x; });
+    dessiner();
+  }
+  function peupler(id, valeurs, tous, lib){ var s = $(id), v = s.value; s.innerHTML = '<option value="">'+tous+'</option>' + (valeurs||[]).map(function(x){ return '<option value="'+esc(x)+'">'+esc(lib(x))+'</option>'; }).join(""); s.value = v; }
+  function dessiner(){
+    $("corps").innerHTML = lignes.map(function(i){ var en = !i.clos_le;
+      return "<tr><td>"+esc(quand(i.ouvert_le))+"</td><td>"+(en ? '<span class="pastille encours">en cours</span>' : esc(quand(i.clos_le)))+"</td><td>"+esc(duree(i.duree_s))+"</td><td><b>"+esc(i.outil)+"</b></td><td>"+esc(LIB[i.nature] || i.nature)+"</td><td>"+(i.occurrences > 1 ? esc(i.occurrences) : "1")+"</td><td>"+esc(i.detail || "")+"</td></tr>"; }).join("");
+    $("vide").hidden = lignes.length > 0; $("compte").textContent = total + (total > 1 ? " incidents" : " incident") + (lignes.length < total ? " (" + lignes.length + " affichés)" : "");
+    $("plus").hidden = lignes.length >= total;
+  }
+  $("formCode").addEventListener("submit", function(e){ e.preventDefault(); try { sessionStorage.setItem(CLE, $("code").value); } catch(x){} $("code").value = ""; charger(false); });
+  ["fOutil","fNature","fEtat","fDu","fAu"].forEach(function(id){ $(id).addEventListener("change", function(){ charger(false); }); });
+  $("effacer").addEventListener("click", function(){ ["fOutil","fNature","fEtat","fDu","fAu"].forEach(function(id){ $(id).value = ""; }); charger(false); });
+  $("plus").addEventListener("click", function(){ charger(true); });
+  $("quitter").addEventListener("click", function(){ try { sessionStorage.removeItem(CLE); } catch(e){} lignes = []; montrerAcces(""); });
+  if(code()) charger(false);
+})();
+</script>
+</body>
+</html>
