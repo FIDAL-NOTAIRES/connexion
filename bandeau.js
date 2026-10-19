@@ -6,9 +6,17 @@
    ou navigateur rouvert) tant que l'incident n'est pas clos. Un incident résolu disparaît tout seul (clôture automatique côté serveur). Si la liste est
    illisible, le script se tait : un bandeau ne doit jamais gêner un outil. Aucune donnée personnelle ; rien n'est écrit depuis le navigateur.
    Mise en page : par défaut le bandeau est le PREMIER élément du <body>. Une page dont la mise en page ne le permet pas (le lanceur, coque de téléphone aux écrans
-   superposés) déclare un emplacement <div id="fidal-bandeau-zone"> et le bandeau s'y place. Sous l'encoche d'un téléphone, il respecte la zone sûre du haut. Il ne s'imprime jamais (bordereaux, fenêtres d'impression). */
+   superposés) déclare un emplacement <div id="fidal-bandeau-zone"> et le bandeau s'y place. Sous l'encoche d'un téléphone, il respecte la zone sûre du haut. Il ne s'imprime jamais (bordereaux, fenêtres d'impression). Page encadrée : voir data-sauf-cadre ci-dessous. */
 (function () {
-  if (window.__fidalBandeau) return; window.__fidalBandeau = true;
+  if (window.__fidalBandeau) return;
+  /* Page ouverte dans un cadre par un outil qui porte déjà son propre bandeau (PAINT dans HISTO) : la balise du script peut indiquer, par
+       data-sauf-cadre="histo-sand.vercel.app", l'hôte parent pour lequel se taire ; le parent est lu dans document.referrer. Sans cette indication,
+       ou si le parent est un autre outil (le lanceur masque le sien sous l'écran de l'application ouverte), le bandeau s'affiche normalement. */
+  try {
+    var cs = document.currentScript, sauf = cs && cs.getAttribute && cs.getAttribute("data-sauf-cadre");
+    if (sauf && window.self !== window.top && document.referrer && new URL(document.referrer).host === sauf) return;
+  } catch (e) { }
+  window.__fidalBandeau = true;
   var API = "https://connexion-omega.vercel.app/api/incidents", CLE = "fidal.bandeau.ferme", REGARD = 300000, barre = null;
   var esc = function (t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var fermee = function () { try { return sessionStorage.getItem(CLE) === "1"; } catch (e) { return false; } };
