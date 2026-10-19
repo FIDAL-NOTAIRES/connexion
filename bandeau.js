@@ -6,7 +6,7 @@
    ou navigateur rouvert) tant que l'incident n'est pas clos. Un incident résolu disparaît tout seul (clôture automatique côté serveur). Si la liste est
    illisible, le script se tait : un bandeau ne doit jamais gêner un outil. Aucune donnée personnelle ; rien n'est écrit depuis le navigateur.
    Mise en page : par défaut le bandeau est le PREMIER élément du <body>. Une page dont la mise en page ne le permet pas (le lanceur, coque de téléphone aux écrans
-   superposés) déclare un emplacement <div id="fidal-bandeau-zone"> et le bandeau s'y place. Sous l'encoche d'un téléphone, il respecte la zone sûre du haut. */
+   superposés) déclare un emplacement <div id="fidal-bandeau-zone"> et le bandeau s'y place. Sous l'encoche d'un téléphone, il respecte la zone sûre du haut. Il ne s'imprime jamais (bordereaux, fenêtres d'impression). */
 (function () {
   if (window.__fidalBandeau) return; window.__fidalBandeau = true;
   var API = "https://connexion-omega.vercel.app/api/incidents", CLE = "fidal.bandeau.ferme", REGARD = 300000, barre = null;
@@ -20,6 +20,7 @@
     s.textContent = "#fidal-bandeau{font:13px/1.4 'Segoe UI',system-ui,sans-serif;background:#A01040;color:#fff;position:relative;z-index:99999}" +
       "#fidal-bandeau .fb-haut{display:flex;align-items:center;gap:10px;padding:7px 14px}" +
       "#fidal-bandeau:not(.fb-zone) .fb-haut{padding-top:calc(7px + env(safe-area-inset-top,0px))}" +
+      "@media print{#fidal-bandeau{display:none !important}}" +
       "#fidal-bandeau summary{cursor:pointer;font-weight:600;list-style:none;flex:1}#fidal-bandeau summary::-webkit-details-marker{display:none}" +
       "#fidal-bandeau summary::before{content:'';display:inline-block;border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-right:8px;transition:transform .15s}" +
       "#fidal-bandeau details[open] summary::before{transform:rotate(90deg)}" +
