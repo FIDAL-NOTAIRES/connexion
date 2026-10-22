@@ -1,551 +1,1570 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MORNING — FIDAL Notaires</title>
-<meta name="description" content="Ouverture de journée : une seule autorisation Google, réutilisée ensuite par tous les outils du cabinet.">
-<meta name="theme-color" content="#0F2238">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MORNING">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230F2238'/><path d='M10 17l5 5 8-11' fill='none' stroke='%23FFE764' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230F2238'/><path d='M56 96l28 28 45-62' fill='none' stroke='%23FFE764' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="/bandeau.js" defer></script>
-<script src="./acces.js"></script>
+<meta name="robots" content="noindex">
+<title>SUIVI — dossiers</title>
+<script src="https://connexion-omega.vercel.app/bandeau.js" defer></script>
+<script src="/calendrier.js"></script>
+<script src="/types.js"></script>
+<script src="/lecture.js"></script>
 <style>
+/* ------------------------------------------------------------------
+   SUIVI — suivi des dossiers. Grammaire visuelle reprise de PHARE :
+   anneau segmenté, modules hexagonaux branchés par des barres à
+   segments, cœur holographique, panneau déporté.
+   Charte FIDAL v2.2 : Georgia (titres) / Segoe UI (texte)
+------------------------------------------------------------------ */
 :root{
-  --nuit:#0F2238; --canard:#33838B; --orange:#FF982D; --carmin:#A01040; --cyan:#6DD5DC;
-  --jaune-forme:#FFE764; --jaune-texte:#FFC900;
-  --encre:#EAF2F7; --encre-faible:#9FB3C4; --trait:rgba(255,255,255,.10);
-  --fond:#0B1B2E; --carte:rgba(255,255,255,.035);
+  --fond:#081625; --canard:#33838B; --orange:#FF982D; --carmin:#A01040; --rouge:#E0456E;
+  --cyan:#6DD5DC; --jaune:#FFC900; --texte:#E8EFF5; --gris:#92A6B8;
+  --bord:#27425B; --ardoise:#122A42; --signet:#33838B;
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%}
-body{
-  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--encre);
-  background:radial-gradient(1200px 700px at 50% -10%,#173556 0%,var(--fond) 55%,#071324 100%);
-  padding:0 16px 48px;
+html,body{height:100%}
+body{margin:0;background:var(--fond);color:var(--texte);
+  font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;overflow:hidden}
+body::before{content:"";position:fixed;inset:-20% -10% auto;height:70vh;pointer-events:none;
+  background:radial-gradient(60% 70% at 50% 0%,rgba(51,131,139,.22),transparent 70%)}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:400;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--jaune);outline-offset:2px}
+.cache{display:none!important}
+.mono{font:600 10.5px/1.4 ui-monospace,'Cascadia Mono','Segoe UI Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase}
+
+.enveloppe{max-width:1280px;margin:0 auto;padding:0 26px;width:100%;position:relative}
+#appli{flex:1;min-height:0;display:flex;flex-direction:column}
+
+/* ---------- en-tête ---------- */
+.barre{display:flex;align-items:center;gap:22px;padding:12px 0 6px;flex:none}
+.marque{display:flex;align-items:center;gap:13px}
+.trait{width:3px;height:38px;background:var(--jaune);border-radius:2px}
+.marque b{display:block;font-family:Georgia,serif;font-size:19px;letter-spacing:.14em;font-weight:400;line-height:1.1}
+.marque span{display:block;color:var(--cyan)}
+.champ{position:relative;width:min(320px,100%);margin-left:auto}
+.champ input{width:100%;padding:9px 12px 9px 36px;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:3px;outline:none;color:var(--texte)}
+.champ input:focus{border-color:var(--jaune)}
+.champ input::placeholder{color:#7D93A7}
+.champ svg{position:absolute;left:12px;top:10px;width:16px;height:16px;stroke:#7D93A7;fill:none;stroke-width:2}
+.bouton{border:1px solid var(--bord);background:transparent;color:var(--texte);border-radius:3px;padding:8px 14px;white-space:nowrap}
+.bouton:hover{background:rgba(255,255,255,.06)}
+.bouton.fort{background:var(--jaune);border-color:var(--jaune);color:#1B2A3A;font-weight:600}
+.bouton.fort:hover{filter:brightness(1.07)}
+.bouton.danger{color:#FF8FAE;border-color:#6A2340}
+.bouton.petit{padding:4px 10px;font-size:13px}
+.bouton:disabled{opacity:.45;cursor:default}
+
+/* bandeau des fériés et solennités, à la couleur liturgique */
+.fete{flex:none;margin:4px 0 0;padding:8px 14px;font-family:Georgia,serif;font-size:15px;border-left:3px solid}
+.fete.blanc{background:rgba(251,248,239,.95);color:#1B2A3A;border-left-color:#C9A646;box-shadow:inset 0 -1px 0 #C9A646}
+.fete.rouge{background:rgba(160,16,64,.85);border-left-color:#FF8FAE}
+.fete.vert{background:rgba(47,107,63,.85);border-left-color:#8FD3A1}
+.fete.violet{background:rgba(91,42,110,.85);border-left-color:#CDA2E0}
+
+/* ---------- l'anneau et le panneau ---------- */
+.ciel{flex:1;min-height:0;display:flex;gap:18px;align-items:stretch;padding:4px 0}
+svg.carte{flex:1 1 auto;min-width:0;height:100%;display:block}
+.ico{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.module{cursor:pointer}
+.module:focus{outline:none}
+.segment{transition:opacity .18s}
+@keyframes allumage{from{opacity:0}to{opacity:var(--opf,.9)}}
+.segment.allumage{animation:allumage .42s ease-out both}
+.module:hover .segment,.module:focus .segment,.module.choisi .segment{opacity:1}
+.ecusson{transition:stroke-width .18s}
+.module:hover .ecusson,.module:focus .ecusson,.module.choisi .ecusson{stroke-width:2.4}
+.cadre-survol{opacity:0;transition:opacity .15s}
+.module:hover .cadre-survol,.module:focus .cadre-survol,.module.choisi .cadre-survol{opacity:.9}
+.etiquette{font:600 10.5px/1 ui-monospace,'Cascadia Mono','Segoe UI Mono',Menlo,monospace;letter-spacing:.1em;pointer-events:none;opacity:.8}
+.module:hover .etiquette,.module:focus .etiquette,.module.choisi .etiquette{opacity:1}
+.cran{stroke:#0A1C2C;stroke-width:3}
+.titre-arc{font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em}
+.eteint{opacity:.13}
+.vide-arc{font:12px "Segoe UI",sans-serif;fill:#5E7A8D}
+.borne{font:600 8.5px/1 ui-monospace,'Cascadia Mono',Menlo,monospace;letter-spacing:.08em;opacity:.8;pointer-events:none}
+.titre-mat{font:400 12px/1 Georgia,serif;letter-spacing:.3em}
+.titre-arc{font-size:9px}
+.barre-nom{font-family:ui-monospace,'Cascadia Mono','Segoe UI Mono',Menlo,monospace;font-weight:600;letter-spacing:.05em;paint-order:stroke;stroke:#0A1C2C;stroke-width:2.6px;stroke-linejoin:round;pointer-events:none}
+.rouge-fort{color:#FF8FAE;font-weight:600}
+.legende span{white-space:nowrap}
+@keyframes influx{from{stroke-dashoffset:var(--long,200)}to{stroke-dashoffset:0}}
+.influx{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:var(--eclat,18) var(--long,200);animation:influx var(--vitesse,6s) linear infinite;animation-delay:var(--decalage,0s)}
+@keyframes tourne{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes tourne-inv{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+@keyframes bat{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+@keyframes respire{0%,100%{opacity:.18}50%{opacity:.46}}
+@keyframes alerte{0%,100%{opacity:.35}50%{opacity:1}}
+.gire{animation:tourne var(--tour,30s) linear infinite}
+.gire-inv{animation:tourne-inv var(--tour,30s) linear infinite}
+.reacteur{animation:bat 3.2s ease-in-out infinite}
+.halo-coeur{animation:respire 6s ease-in-out infinite}
+.pulse{animation:alerte 1.8s ease-in-out infinite}
+.sablier{cursor:pointer}
+.sablier .zone-sab{fill:transparent}
+.sablier:hover use{filter:brightness(1.3)}
+@keyframes clignote{0%,100%{opacity:1}50%{opacity:.15}}
+.sablier.clignote use{animation:clignote 1s steps(2,end) infinite}
+.etude{border:1px solid var(--bord);border-radius:6px;padding:8px 10px;margin-top:4px}
+.etude-ligne{display:flex;align-items:center;gap:10px;padding:5px 0;border-top:1px solid rgba(255,255,255,.06);font-size:13.5px}
+.etude-ligne:first-child{border-top:0}
+.etude-ligne .qui{flex:1;min-width:0}
+.etude-ligne .qui b{font-weight:600;color:#EDF6FA}
+.etude-ligne .qui span{display:block;color:var(--gris);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.etude-ligne label.case{margin:0;white-space:nowrap}
+.etude-ligne .sans{color:var(--gris);font-size:12px;white-space:nowrap}
+.etude-ligne .retirer{border:0;background:none;color:var(--gris);font-size:18px;line-height:1;padding:0 4px}
+.etude-ajout{display:flex;gap:8px;align-items:center;margin-top:8px}
+.etude-ajout select{flex:1}
+.etude-vide{color:var(--gris);font-size:13px;padding:4px 0}
+.motif-requis{border:2px solid var(--orange)!important;box-shadow:0 0 0 3px rgba(255,152,45,.18)}
+.coeur-clic{cursor:pointer}
+.compte{font:400 46px/1 ui-monospace,'Cascadia Mono','Segoe UI Mono',Menlo,monospace;fill:#CDEFF4}
+.compte.chaud{fill:#FFB667}
+.indic{font:600 9.5px/1 "Segoe UI",sans-serif;letter-spacing:.22em;fill:#6E93A8}
+.indic-fort{font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;fill:#9FC4D2}
+
+.panneau{flex:none;width:300px;align-self:center;max-height:100%;overflow-y:auto;padding:16px 16px 16px 15px;
+  border-left:2px solid #2A5872;background:linear-gradient(90deg,rgba(18,42,66,.75),rgba(10,28,44,.2));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
+.panneau h3{font-size:19px;line-height:1.25;margin:0 0 6px;color:#EDF6FA}
+.panneau .haut{margin:0 0 8px}
+.panneau p{margin:0 0 8px;font-size:13px;color:#9FB8C8}
+.panneau .alerte{color:#FFB667}
+.panneau .rouge{color:#FF8FAE}
+.panneau .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.panneau ul{list-style:none;margin:0;padding:0}
+.panneau li{padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13px}
+.panneau li:first-child{border-top:0}
+.panneau li b{display:block;color:#EDF6FA;font-weight:600;cursor:pointer}
+.panneau li span{color:#9FB8C8}
+.panneau .petits{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+.panneau .rapide{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px}
+.panneau input[type=text]{width:100%;padding:7px 10px;background:rgba(255,255,255,.06);border:1px solid var(--bord);border-radius:3px;outline:none}
+.panneau input[type=text]:focus{border-color:var(--jaune)}
+
+/* pied */
+footer{flex:none;border-top:1px solid #1B3049;padding:8px 0 10px;color:#7D93A7;font-size:12.5px}
+footer .enveloppe{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.lien{background:none;border:0;color:var(--cyan);padding:0;text-decoration:underline;font-size:12.5px}
+.legende{display:flex;gap:16px;flex-wrap:wrap}
+.legende i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+
+/* ---------- repli en liste (écrans étroits) ---------- */
+.repli{display:none;padding:6px 0 30px}
+.repli h2{margin:18px 0 4px;display:flex;align-items:center;gap:9px}
+.repli h2 i{width:20px;height:3px;border-radius:2px;display:block}
+.repli a{display:block;text-decoration:none;color:inherit;padding:9px 0 9px 14px;border-left:3px solid #1E3650;cursor:pointer}
+.repli a b{display:block;font-weight:600}
+.repli a span{display:block;font-size:13px;color:var(--gris)}
+
+/* ---------- volet du dossier ---------- */
+.voile{position:fixed;inset:0;background:rgba(4,10,18,.66);z-index:20}
+.volet{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:#0C1F33;border-left:1px solid var(--bord);z-index:21;overflow-y:auto;padding:22px 26px 40px}
+.volet h2{font-size:24px;padding-right:40px;line-height:1.25}
+.volet .fermer{position:absolute;top:14px;right:18px;border:0;background:none;font-size:26px;color:var(--gris)}
+.volet .sous{color:var(--gris);font-size:13.5px;margin:4px 0 12px}
+.etapes{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
+.etapes button{border:1px solid var(--bord);background:transparent;color:var(--texte);border-radius:16px;padding:4px 12px;font-size:13.5px}
+.etapes button.actuelle{background:var(--canard);border-color:var(--canard);color:#fff}
+.etapes button:disabled:not(.actuelle){opacity:.4}
+.bloc{border-top:1px solid #1E3650;padding-top:14px;margin-top:14px}
+.bloc h3{font-size:17px;margin-bottom:8px}
+.ligne{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.volet input[type=text],.volet input[type=email],.volet input[type=date],.volet select,.volet textarea{
+  width:100%;padding:8px 10px;background:rgba(255,255,255,.06);border:1px solid var(--bord);border-radius:4px;outline:none;color:var(--texte)}
+.volet input:focus,.volet select:focus,.volet textarea:focus{border-color:var(--jaune)}
+.volet select option{background:#0C1F33}
+textarea{min-height:60px;resize:vertical}
+.chrono{list-style:none;margin:0;padding:0}
+.chrono li{display:grid;grid-template-columns:86px 1fr;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);font-size:14px}
+.chrono li:first-child{border-top:0}
+.chrono .d{color:var(--gris);font-variant-numeric:tabular-nums}
+.chrono .etape{color:var(--cyan)}
+.chrono .rappel{color:#FFB667}
+.chrono .creation{color:var(--gris)}
+.chrono .mail{color:#CFE6EE}
+.mail-attente b{display:block;color:#EDF6FA;font-weight:600}
+.mail-attente span{display:block;margin-top:2px}
+.mail-attente select{flex:1;min-width:180px}
+.rappels li{grid-template-columns:1fr auto}
+.rappels .echu{color:#FFB667;font-weight:600}
+.petits{display:flex;gap:6px}
+form.fiche label{display:block;margin-top:10px;font-size:13.5px;color:var(--gris)}
+form.fiche label input,form.fiche label select,form.fiche label textarea{margin-top:3px;display:block}
+.volet input[type=number]{width:100%;padding:8px 10px;background:rgba(255,255,255,.06);border:1px solid var(--bord);border-radius:4px;outline:none;color:var(--texte)}
+.volet optgroup{background:#0C1F33;color:var(--gris)}
+form.fiche .deux{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+form.fiche .case{display:flex;gap:8px;align-items:center;color:var(--texte)}
+form.fiche .case input{width:16px;height:16px;accent-color:var(--jaune);margin:0}
+.apercu{margin-top:12px;font-size:13.5px;background:rgba(51,131,139,.14);border-left:3px solid var(--canard);padding:8px 12px}
+.erreur{color:#FF8A8A;margin-top:10px;font-size:13.5px;min-height:1em}
+table.classes{width:100%;border-collapse:collapse;margin-top:8px}
+table.classes td,table.classes th{padding:7px 8px;border-top:1px solid rgba(255,255,255,.07);text-align:left;font-size:13.5px}
+table.classes th{color:var(--gris);font-weight:600}
+table.classes tr.l{cursor:pointer}
+table.classes tr.l:hover{background:rgba(255,255,255,.04)}
+
+/* fenêtre de confirmation d'étape */
+dialog{border:1px solid var(--bord);background:var(--ardoise);color:var(--texte);border-radius:10px;padding:22px 24px;max-width:420px;width:92%;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+dialog::backdrop{background:rgba(4,10,18,.7)}
+dialog h3{font-size:19px;margin-bottom:10px}
+dialog label{display:block;margin-top:10px;font-size:13.5px;color:var(--gris)}
+dialog input,dialog select{display:block;width:100%;margin-top:3px;padding:8px 10px;background:rgba(255,255,255,.07);border:1px solid var(--bord);border-radius:4px;color:var(--texte)}
+dialog select option{background:var(--ardoise)}
+dialog .boutons{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+/* dépôt de mail */
+.depot{border:1.5px dashed #2F6E86;border-radius:8px;padding:22px 16px;color:#9FC4D2;text-align:center;background:rgba(109,213,220,.04);margin-top:10px}
+.depot-titre{font-family:Georgia,serif;font-size:16px;color:#CDEFF4}
+.depot-aide{font-size:12.5px;color:var(--gris);margin-top:4px}
+.depot:hover,.depot.survol{border-color:var(--jaune);color:#FFE38A;background:rgba(255,201,0,.06)}
+.lu{border-left:3px solid var(--cyan);background:rgba(109,213,220,.07);padding:10px 12px;margin-top:10px;font-size:13.5px}
+.lu b{display:block;color:#EDF6FA;font-weight:600;margin-bottom:2px}
+.lu .apercu-mail{color:var(--gris);margin-top:6px;font-style:italic}
+.prerempli{border-left:3px solid var(--cyan)!important}
+#rideau{position:fixed;inset:0;z-index:50;background:rgba(8,22,37,.82);display:flex;align-items:center;justify-content:center;pointer-events:none}
+#rideau div{border:2px dashed var(--jaune);border-radius:12px;padding:40px 60px;font-family:Georgia,serif;font-size:22px;color:#FFE38A}
+
+/* écran d'accès */
+.acces{max-width:400px;margin:14vh auto;background:var(--ardoise);border:1px solid var(--bord);border-radius:10px;padding:26px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.acces h1{font-size:26px;letter-spacing:.14em;margin-bottom:6px}
+.acces p{color:var(--gris);margin:0 0 16px;font-size:14px}
+.acces input{width:100%;padding:11px 13px;background:rgba(255,255,255,.07);border:1px solid var(--bord);border-radius:6px;outline:none;margin-bottom:12px}
+.acces input:focus{border-color:var(--jaune)}
+
+@media (max-width:1040px){.panneau{display:none}}
+@media (max-width:720px){
+  html,body{height:auto} body{overflow:auto;display:block}
+  .ciel{display:none} .repli{display:block} .barre{flex-wrap:wrap} .champ{width:100%;margin-left:0}
 }
-h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;margin:0}
-.entete{max-width:760px;margin:0 auto;padding:34px 0 10px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-.entete .marque{font-family:Georgia,serif;font-size:22px;letter-spacing:.5px}
-.entete .marque b{font-weight:700}
-.entete .marque small{font-size:12px;letter-spacing:3px;color:var(--encre-faible);margin-left:8px}
-.entete .date{margin-left:auto;color:var(--encre-faible);font-size:13px}
-main{max-width:760px;margin:0 auto}
-.heros{text-align:center;padding:26px 0 8px}
-.heros h1{font-size:34px;color:var(--jaune-forme);line-height:1.15}
-.heros p{color:var(--encre-faible);margin:10px auto 0;max-width:520px;font-size:14.5px;line-height:1.55}
-.heros .sous-titre{font-family:Georgia,serif;font-size:17px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
-.bloc{margin-top:26px;background:var(--carte);border:1px solid var(--trait);border-radius:16px;padding:18px 18px 16px}
-.bloc h2{font-size:17px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.bloc h2 small{margin-left:auto;font-family:'Segoe UI',sans-serif;font-size:12px;color:var(--encre-faible);font-weight:400}
-.chantiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:6px}
-.chantier{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;border:1px solid var(--trait);border-radius:10px;font-size:12.5px;text-decoration:none;color:var(--encre);background:rgba(255,255,255,.02)}
-.chantier:hover{border-color:var(--cyan)}
-.chantier b{font-weight:600;font-size:11.5px;letter-spacing:.3px}
-.chantier .n{min-width:24px;text-align:center;border-radius:999px;padding:2px 7px;font-size:11.5px;font-weight:600;background:var(--cyan);color:var(--nuit)}
-.chantier .n.zero{background:rgba(255,255,255,.1);color:var(--encre-faible)}
-.chantier.termine{opacity:.55}
-.services{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.service{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--trait);border-radius:999px;font-size:12.5px;color:var(--encre);text-decoration:none}
-.service i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)}
-.service.ok i{background:#3CC97A;box-shadow:0 0 8px rgba(60,201,122,.6)}
-.service.ko i{background:var(--carmin);box-shadow:0 0 8px rgba(160,16,64,.7)}
-.service.attente i{background:var(--orange)}
-.service.lent i,.service.degrade i,.service.attention i{background:var(--orange);box-shadow:0 0 8px rgba(255,152,45,.6)}
-.service.protege i{background:var(--cyan)}
-.sante{margin-top:10px;font-size:12.5px;line-height:1.5}
-.sante .l{padding:4px 0;border-bottom:1px dotted var(--trait)}
-.sante .l.ko{color:#FF9BB3}
-.sante .l.attention,.sante .l.degrade,.sante .l.lent{color:var(--orange)}
-.sante .l.info{color:var(--encre-faible)}
-.sous{font-size:13px;margin:16px 0 4px;color:var(--encre-faible);font-weight:600;display:flex;align-items:baseline;gap:10px}
-.sous small{font-weight:400;font-size:12px}
-.reserve{margin-top:14px;font-size:12px;color:var(--encre-faible);font-style:italic}
-.action{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 0 8px}
-.btn{
-  font:inherit;font-size:17px;font-weight:600;padding:15px 34px;border-radius:999px;cursor:pointer;
-  background:var(--jaune-forme);color:var(--nuit);border:0;box-shadow:0 8px 30px rgba(255,231,100,.25);
-  transition:transform .12s,box-shadow .2s,background .2s;
+@media (prefers-reduced-motion:reduce){
+  .influx{display:none} .gire,.gire-inv,.reacteur,.halo-coeur,.pulse,.segment.allumage{animation:none} .sablier.clignote use{animation:none;opacity:1}
 }
-.btn:hover{transform:translateY(-1px);box-shadow:0 10px 34px rgba(255,231,100,.35)}
-.btn:active{transform:none}
-.btn[disabled]{opacity:.55;cursor:default;transform:none;box-shadow:none}
-.btn.secondaire{background:none;color:var(--encre);border:1px solid var(--trait);box-shadow:none;font-size:14px;padding:10px 20px}
-.btn.secondaire:hover{border-color:rgba(255,255,255,.3);box-shadow:none}
-.mot{color:var(--encre-faible);font-size:13px;min-height:18px;text-align:center}
-.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:26px}
-.carte{background:var(--carte);border:1px solid var(--trait);border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden}
-.carte::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,rgba(255,255,255,.15))}
-.carte h2{font-size:17px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
-.voyant{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.18);flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
-.voyant.ok{background:#3CC97A;box-shadow:0 0 12px rgba(60,201,122,.7)}
-.voyant.attente{background:var(--orange);box-shadow:0 0 12px rgba(255,152,45,.6)}
-.voyant.ko{background:var(--carmin);box-shadow:0 0 12px rgba(160,16,64,.7)}
-.carte .etat{font-size:14px;line-height:1.5}
-.carte .detail{color:var(--encre-faible);font-size:12.5px;margin-top:6px;line-height:1.5}
-.carte .detail b{color:var(--encre);font-weight:600}
-.liste{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
-.liste li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--trait)}
-.liste li span:first-child{flex:none}
-.liste li span:last-child{color:var(--encre-faible);text-align:right;min-width:0;overflow-wrap:anywhere}
-.liste li.vieux span:last-child{color:var(--orange)}
-.suite{margin-top:30px;border-top:1px solid var(--trait);padding-top:18px}
-.suite h2{font-size:15px;color:var(--encre-faible);letter-spacing:.4px;margin-bottom:12px}
-.raccourcis{display:flex;flex-wrap:wrap;gap:10px}
-.raccourcis a{
-  color:var(--encre);text-decoration:none;font-size:13.5px;padding:9px 15px;border-radius:999px;
-  border:1px solid var(--trait);background:rgba(255,255,255,.03);transition:border-color .15s,background .15s;
-}
-.raccourcis a:hover{border-color:var(--cyan);background:rgba(109,213,220,.08)}
-.raccourcis a i{font-style:normal;color:var(--cyan);margin-right:7px}
-.journal{margin-top:26px;font-size:12px;color:var(--encre-faible)}
-.journal summary{cursor:pointer;user-select:none}
-.journal pre{margin:8px 0 0;white-space:pre-wrap;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.25);padding:10px 12px;border-radius:10px;max-height:220px;overflow:auto}
-.avis{margin-top:18px;background:rgba(160,16,64,.14);border:1px solid rgba(160,16,64,.45);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5}
-.avis[hidden]{display:none}
-@media (max-width:520px){ .heros h1{font-size:27px} .btn{width:100%} }
 </style>
 </head>
 <body>
 
-<header class="entete">
-  <div class="marque"><b>FIDAL</b> <small>NOTAIRES</small></div>
-  <div class="date" id="date"></div>
-</header>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-dossier" viewBox="0 0 24 24"><path class="ico" d="M3 7h6l2 2h10v10H3z"/><path class="ico" d="M3 7V5h6"/></symbol>
+  <symbol id="i-cloche" viewBox="0 0 24 24"><path class="ico" d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path class="ico" d="M10 21h4"/></symbol>
+  <symbol id="i-sablier" viewBox="0 0 24 24"><path class="ico" d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9"/><path class="ico" d="M10 18h4"/></symbol>
+  <symbol id="i-plume" viewBox="0 0 24 24"><path class="ico" d="M20 4C10 5 6 10 5 19l3-3c7 0 11-4 12-12z"/><path class="ico" d="M4 20l6-6"/></symbol>
+</defs></svg>
 
-<main>
-  <section class="heros">
-    <h1>MORNING</h1>
-    <p class="sous-titre">Ouverture de journée</p>
-    <p>Un seul geste le matin : l'accord Google pour la journée, la veille des arrêtés, l'état des services
-       et des chantiers. Les outils du cabinet n'auront plus rien à demander.</p>
-  </section>
+<section class="acces cache" id="ecran-acces">
+  <h1>SUIVI</h1>
+  <p>Suivi des dossiers. Saisissez votre code d’accès.</p>
+  <form id="form-acces">
+    <input type="password" id="code" autocomplete="current-password" aria-label="Code d’accès" required>
+    <button class="bouton fort" type="submit">Ouvrir</button>
+    <div class="erreur" id="erreur-acces"></div>
+  </form>
+</section>
 
-  <div class="action">
-    <button class="btn" id="btnOuvrir" type="button">Ouvrir la journée</button>
-    <div class="mot" id="mot">Préparation…</div>
-  </div>
-
-  <div class="avis" id="avisOrigine" hidden>
-    Google refuse la connexion depuis cette adresse. L'adresse de cette page doit figurer parmi les
-    « origines JavaScript autorisées » du client OAuth du cabinet, dans la console Google Cloud.
-  </div>
-
-  <section class="grille" aria-live="polite">
-    <article class="carte" style="--c:var(--cyan)">
-      <h2><span class="voyant" id="vDrive"></span>Drive</h2>
-      <div class="etat" id="eDrive">Non connecté.</div>
-      <div class="detail" id="dDrive">L'accès est en lecture seule et se limite à ce que voit votre compte.</div>
-    </article>
-
-    <article class="carte" style="--c:var(--orange)">
-      <h2><span class="voyant" id="vBase"></span>Base de réglages</h2>
-      <div class="etat" id="eBase">Vérification…</div>
-      <div class="detail" id="dBase">Base mutualisée du cabinet (arbitrages CARTO, réglages PRIX, dates de vérification).</div>
-    </article>
-
-    <article class="carte" style="--c:var(--carmin)">
-      <h2><span class="voyant" id="vVeille"></span>Arrêtés préfectoraux</h2>
-      <div class="etat" id="eVeille">Lecture du journal de veille…</div>
-      <div class="detail" id="dVeille">Veille XYLO : termites, mérule et périmètres associés, comparés chaque jour à la cartographie Cerema.</div>
-      <ul class="liste" id="lVeille"></ul>
-      <div class="detail" style="margin-top:10px">
-        <button class="btn secondaire" id="btnVeille" type="button" style="font-size:12.5px;padding:7px 14px" hidden>Relancer la veille</button>
-      </div>
-      <div class="detail" style="margin-top:10px;opacity:.8">RISQUES et URBA interrogent Géorisques et le géoportail de l'urbanisme en direct : aucune base locale à rafraîchir le matin.</div>
-    </article>
-  </section>
-
-  <div class="action" style="padding-top:18px">
-    <button class="btn secondaire" id="btnRenouveler" type="button" hidden>Renouveler l'accès</button>
-  </div>
-
-  <section class="bloc" id="bloc-chantiers">
-    <h2><span class="voyant" id="vChantiers"></span>Chantiers <small id="sChantiers">points restants lus sur le Drive après l'ouverture</small></h2>
-    <div class="etat" id="eChantiers" style="font-size:13px;color:var(--encre-faible)">En attente de l'accord Google.</div>
-    <div class="chantiers" id="lChantiers"></div>
-  </section>
-
-  <section class="bloc" id="bloc-services">
-    <h2><span class="voyant" id="vServices"></span>Services <small id="sServices">les applications de la suite répondent-elles ?</small></h2>
-    <div class="services" id="lServices"></div>
-    <div class="sante" id="sSante"></div>
-    <h3 class="sous">Sources de données <small id="sSources">les services publics dont dépend la suite</small></h3>
-    <div class="services" id="lSources"></div>
-    <div class="reserve">À venir ici, quand le lanceur les portera : les éléments à voir et le journal des incidents.</div>
-  </section>
-
-  <section class="suite">
-    <h2>Une fois la journée ouverte</h2>
-    <div class="raccourcis">
-      <a href="https://fidal-apps.vercel.app/" target="_blank" rel="noopener"><i>◉</i>FIDAL Apps</a>
-      <a href="https://carto-six.vercel.app/" target="_blank" rel="noopener"><i>✦</i>CARTO</a>
-      <a href="https://trente.vercel.app/" target="_blank" rel="noopener"><i>⌂</i>TRENTE</a>
-      <a href="https://fusion-three-kappa.vercel.app/" target="_blank" rel="noopener"><i>⧉</i>FUSION</a>
-      <a href="https://marteau-rho.vercel.app/" target="_blank" rel="noopener"><i>⚒</i>MARTEAU</a>
+<div id="appli" class="cache">
+  <div class="enveloppe" style="flex:none">
+    <div class="barre">
+      <div class="marque"><div class="trait"></div><div><b>SUIVI</b><span class="mono" id="date-jour"></span></div></div>
+      <label class="champ"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+        <input type="search" id="recherche" placeholder="Chercher un dossier, une partie…" aria-label="Chercher un dossier"></label>
+      <button class="bouton fort" id="nouveau">Nouveau dossier</button>
+      <button class="bouton" id="verrouiller">Verrouiller</button>
     </div>
-  </section>
+    <p class="fete cache" id="fete"></p>
+  </div>
 
-  <details class="journal">
-    <summary>Journal technique</summary>
-    <pre id="journal"></pre>
-  </details>
-</main>
+  <div class="enveloppe ciel" id="ciel" style="flex:1">
+    <svg class="carte" id="carte" viewBox="0 0 1000 700" role="img" aria-label="Les dossiers, rangés par type autour d’un anneau"></svg>
+    <aside class="panneau" id="panneau" aria-live="polite"></aside>
+  </div>
+  <div class="enveloppe repli" id="repli"></div>
+
+  <footer><div class="enveloppe">
+    <div class="legende">
+      <span title="Chaque dossier s’éloigne du centre au fil du temps ; le bord de son secteur marque la durée moyenne de son type">Bord = délai moyen du type</span>
+      <span><i style="background:var(--orange)"></i>Délai proche ou dépassé</span>
+      <span><svg width="11" height="11" style="vertical-align:-1px;margin-right:5px;color:#FFB667" aria-hidden="true"><use href="#i-sablier"/></svg>Sablier : date limite dans 3 jours ; clignotant : dépassée</span>
+      <span><i style="background:var(--rouge)"></i>Signature ou échéance dépassée</span>
+      <span id="compte-dossiers"></span>
+    </div>
+    <span><button class="lien" id="voir-collaborateurs">Collaborateurs (<span id="n-collab">0</span>)</button> · <button class="lien" id="voir-classes">Signés, abandonnés et clos (<span id="n-classes">0</span>)</button></span>
+  </div></footer>
+</div>
+
+<div id="rideau" class="cache"><div>Déposez le mail : SUIVI prépare la fiche</div></div>
+<div class="voile cache" id="voile"></div>
+<aside class="volet cache" id="volet" role="dialog" aria-modal="true"></aside>
+
+<dialog id="dlg-delai">
+  <form method="dialog">
+    <h3 id="dlg-delai-titre">Réajuster la date limite</h3>
+    <p class="sous" id="dlg-delai-actuelle"></p>
+    <label>Nouvelle date limite<input type="date" id="dlg-delai-date" required></label>
+    <label>Motif du report (obligatoire)<textarea id="dlg-delai-motif" class="motif-requis" maxlength="500" rows="3" placeholder="Pourquoi le délai est-il reporté ?"></textarea></label>
+    <div class="erreur" id="dlg-delai-erreur"></div>
+    <div class="boutons">
+      <button class="bouton" value="annuler" formnovalidate>Annuler</button>
+      <button class="bouton fort" value="valider" id="dlg-delai-valider">Enregistrer le report</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-etape">
+  <form method="dialog">
+    <h3 id="dlg-titre"></h3>
+    <label>Date<input type="date" id="dlg-date" required></label>
+    <div id="dlg-motif-bloc" class="cache">
+      <label>Motif<select id="dlg-motif"></select></label>
+      <label id="dlg-libre-bloc" class="cache">Précisez le motif<input type="text" id="dlg-libre" maxlength="200"></label>
+    </div>
+    <div class="erreur" id="dlg-erreur"></div>
+    <div class="boutons">
+      <button class="bouton" value="annuler" formnovalidate>Annuler</button>
+      <button class="bouton fort" value="valider" id="dlg-valider">Valider</button>
+    </div>
+  </form>
+</dialog>
 
 <script>
-/* ------------------------------------------------------------------ */
-const E = id => document.getElementById(id);
-const API = "https://prix-mu.vercel.app/api/parametres";
-const journal = [];
-function noter(m){ journal.push(new Date().toLocaleTimeString("fr-FR")+"  "+m); E("journal").textContent = journal.join("\n"); }
-function voyant(id, cl){ const v = E(id); v.className = "voyant"+(cl?" "+cl:""); }
-const heure = t => new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-const dateFr = t => new Date(t).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});
+'use strict';
+var C = window.SuiviCalendrier, T = window.SuiviTypes;
+var CLE = 'suivi.code';
+var etat = { aujourdhui: C.aujourdhui(), collaborateurs: [], dossiers: [], rappels: [], echeances: [], motifs: [], motifsCloture: [], libellesEcheance: [], ouvert: null, choisi: null, jour: null, releves: null };
+var LIBELLES = { en_cours: 'En cours', avant_contrat: 'Avant-contrat', signe: 'Signé', abandonne: 'Abandonné', formalites: 'Formalités', clos: 'Clore' };
+var ORANGE = '#FF982D', ROUGE = '#E0456E';
+var COULEURS_LITURGIQUES = { blanc: '#E9D99A', rouge: '#E0456E', vert: '#46B98A', violet: '#B07CCB' };
 
-E("date").textContent = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+function $(id) { return document.getElementById(id); }
+function el(tag, attrs, enfants) {
+  var n = document.createElement(tag);
+  if (attrs) for (var k in attrs) {
+    if (k === 'texte') n.textContent = attrs[k];
+    else if (k === 'classe') n.className = attrs[k];
+    else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), attrs[k]);
+    else n.setAttribute(k, attrs[k]);
+  }
+  (enfants || []).forEach(function (e) { if (e) n.appendChild(typeof e === 'string' ? document.createTextNode(e) : e); });
+  return n;
+}
+var NS = 'http://www.w3.org/2000/svg';
+function sv(tag, attrs) { var n = document.createElementNS(NS, tag); for (var k in attrs || {}) n.setAttribute(k, attrs[k]); return n; }
+function fr(s) { return s ? s.split('-').reverse().join('/') : ''; }
+function dateLongue(s) { return new Date(s + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }); }
+function ecart(a, b) { return Math.round((Date.parse(b) - Date.parse(a)) / 86400000); }
+function sansAccent(s) { return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 
-/* ---------- Drive : l'autorisation Google ---------- */
-let minuteur = null;
-async function afficherConnexion(jeton){
-  voyant("vDrive","ok");
-  E("eDrive").textContent = "Connecté.";
-  E("btnOuvrir").textContent = "Journée ouverte";
-  E("btnOuvrir").disabled = true;
-  E("btnRenouveler").hidden = false;
-  E("mot").textContent = "Les outils du cabinet peuvent lire le Drive jusqu'à "+heure(FidalAcces.expiration())+".";
-  /* qui est connecté ? */
-  try{
-    const r = await fetch("https://www.googleapis.com/drive/v3/about?fields=user(displayName,emailAddress)",
-                          {headers:{Authorization:"Bearer "+jeton}});
-    if(r.ok){
-      const d = await r.json();
-      const u = d.user || {};
-      FidalAcces.noterCompte(u.emailAddress || "");
-      E("dDrive").innerHTML = "Compte <b>"+(u.emailAddress||"")+"</b>"+(u.displayName?" — "+u.displayName:"")+
-                              ".<br>Accès en lecture seule, valable jusqu'à <b>"+heure(FidalAcces.expiration())+"</b>.";
-      noter("Drive : connecté en tant que "+(u.emailAddress||"?"));
+function api(methode, donnees) {
+  var opt = { method: methode, headers: { 'x-suivi-code': sessionStorage.getItem(CLE) || '' } };
+  var url = '/api/suivi';
+  if (methode === 'GET') url += '?' + new URLSearchParams(donnees).toString();
+  else { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(donnees); }
+  return fetch(url, opt).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (j) {
+      if (r.status === 401) { verrouiller(); throw new Error(j.erreur || 'Code incorrect.'); }
+      if (!r.ok) throw new Error(j.erreur || 'Erreur ' + r.status);
+      return j;
+    });
+  });
+}
+function alerte(err) { window.alert(err.message); }
+
+/* ---------- Accès ---------- */
+function verrouiller() {
+  sessionStorage.removeItem(CLE); fermerVolet();
+  $('appli').classList.add('cache'); $('ecran-acces').classList.remove('cache'); $('code').value = ''; $('code').focus();
+}
+$('form-acces').addEventListener('submit', function (e) {
+  e.preventDefault(); sessionStorage.setItem(CLE, $('code').value); $('erreur-acces').textContent = '';
+  demarrer().catch(function (err) { $('erreur-acces').textContent = err.message; });
+});
+$('verrouiller').addEventListener('click', verrouiller);
+function chargerCollaborateurs() {
+  return api('GET', { action: 'collaborateurs' }).then(function (j) { etat.collaborateurs = j.collaborateurs || []; $('n-collab').textContent = etat.collaborateurs.length; })
+    .catch(function () { etat.collaborateurs = []; });
+}
+/* nom affiché d'une adresse de l'étude */
+function nomEtude(a) {
+  if (T.estPartagee(a)) return T.libellePartagee(a);
+  var c = etat.collaborateurs.filter(function (x) { return x.adresse === a; })[0];
+  return c ? ((c.prenom ? c.prenom + ' ' : '') + c.nom) : a;
+}
+function demarrer() {
+  chargerCollaborateurs();
+  return api('GET', { action: 'etat' }).then(function (j) {
+    etat.aujourdhui = j.aujourdhui; etat.motifs = j.motifs_abandon; etat.motifsCloture = j.motifs_cloture || ['Simple demande de renseignement']; etat.libellesEcheance = j.libelles_echeance || []; etat.jour = j;
+    $('ecran-acces').classList.add('cache'); $('appli').classList.remove('cache');
+    afficherJour(j);
+    return charger().then(function () {
+      lireReleves();
+      if (!etat.minuterie) etat.minuterie = setInterval(function () { if (sessionStorage.getItem(CLE)) lireReleves(); }, 15 * 60000);
+    });
+  });
+}
+
+/* ---------- Date, signet et fête du jour ---------- */
+function afficherJour(j) {
+  etat.jour = j;
+  $('date-jour').textContent = dateLongue(j.aujourdhui);
+  var couleur = (j.jour && j.jour.couleur) || j.couleur_du_temps;
+  etat.signet = COULEURS_LITURGIQUES[couleur] || '#33838B';
+  var f = $('fete');
+  if (j.jour) {
+    var genre = j.jour.solennite ? (j.jour.ferie ? 'Solennité, jour férié' : 'Solennité') : 'Jour férié';
+    f.textContent = genre + ' : ' + j.jour.nom + '. Aucune relance n’est envoyée aujourd’hui.';
+    f.className = 'fete ' + couleur;
+  } else f.className = 'fete cache';
+  if (etat.dossiers.length || $('carte').childNodes.length) dessiner();
+}
+
+/* ---------- Données ---------- */
+function charger() {
+  return api('GET', { action: 'liste' }).then(function (j) {
+    etat.aujourdhui = j.aujourdhui; etat.dossiers = j.dossiers; etat.rappels = j.rappels_echus; etat.echeances = j.echeances_proches || []; etat.releves = j.releves || null;
+    dessiner();
+  });
+}
+function actif(d) { return !d.classe_le || d.classe_le > etat.aujourdhui; }
+function signatureDepassee(d) { return d.signature_prevue && d.signature_prevue < etat.aujourdhui && !d.signature_le && d.etape !== 'abandonne'; }
+function echeanceDepassee(d) { return d.prochaine_echeance && d.prochaine_echeance < etat.aujourdhui && !d.signature_le && d.etape !== 'abandonne'; }
+/* 2 = rouge (signature ou échéance de l'acte dépassée) ; le rappel dû se marque par la cloche */
+function niveau(d) { return signatureDepassee(d) || echeanceDepassee(d) ? 2 : 0; }
+function nomCourt(d) {
+  var p1 = (d.partie1 || '').toUpperCase(), p2 = (d.partie2 || '').toUpperCase();
+  var n = p2 ? p1 + ' / ' + p2 : p1;
+  return n.length > 20 ? n.slice(0, 19) + '…' : n;
+}
+function aTraiter() {
+  var l = [];
+  etat.rappels.forEach(function (r) { l.push({ type: 'rappel', r: r }); });
+  etat.echeances.forEach(function (x) { l.push({ type: 'echeance', x: x, n: ecart(etat.aujourdhui, x.echeance) }); });
+  etat.dossiers.filter(actif).forEach(function (d) { if (T.sablier(d, etat.aujourdhui) === 'depasse') l.push({ type: 'sablier', d: d, fin: T.delais(d, etat.aujourdhui).fin }); });
+  etat.dossiers.filter(actif).forEach(function (d) {
+    if (d.signature_le || d.etape === 'abandonne' || !d.signature_prevue) return;
+    var n = ecart(etat.aujourdhui, d.signature_prevue);
+    if (n < 0) l.push({ type: 'depassee', d: d });
+    else if (n <= 15) l.push({ type: 'proche', d: d, n: n });
+  });
+  return l;
+}
+
+/* ---------- L'anneau ---------- */
+var CX = 500, CY = 350, R_COEUR = 124;
+var rad = function (a) { return a * Math.PI / 180; };
+var surCercle = function (a, r) { return [CX + Math.cos(rad(a)) * r, CY + Math.sin(rad(a)) * r]; };
+function arcD(r, a1, a2) {
+  var p = surCercle(a1, r), q = surCercle(a2, r);
+  return 'M' + p[0].toFixed(1) + ',' + p[1].toFixed(1) + ' A' + r + ',' + r + ' 0 ' + ((a2 - a1) > 180 ? 1 : 0) + ' 1 ' + q[0].toFixed(1) + ',' + q[1].toFixed(1);
+}
+function hexa(cx, cy, r) {
+  var p = [];
+  for (var k = 0; k < 6; k++) { var a = rad(-90 + k * 60); p.push((cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1)); }
+  return p.join(' ');
+}
+
+/* ---------- L'anneau par type de dossier ----------
+   Un secteur par type ouvert (largeur selon le nombre de dossiers, secteurs vides masqués),
+   rangés par matière. Chaque dossier a son rayon : il part du centre à l'ouverture et
+   s'éloigne jusqu'au bord, qui marque la durée moyenne du type ; sa teinte vire à
+   l'orange à l'approche de ce délai. Les signés (formalités) sont au-delà du bord, avec la plume. */
+var R_ANNEAU = 151, R0 = 158, R1 = 302, R_SIGNES = 338, R_MAT = 366;
+var GRADUATIONS = [0.25, 0.5, 0.75];
+function rayonDe(part) { return R0 + (R1 - R0) * Math.min(part, 1.04); }
+function melange(c1, c2, k) {
+  var a = parseInt(c1.slice(1), 16), b = parseInt(c2.slice(1), 16);
+  var r = Math.round((a >> 16) + ((b >> 16) - (a >> 16)) * k), g = Math.round(((a >> 8) & 255) + (((b >> 8) & 255) - ((a >> 8) & 255)) * k), bl = Math.round((a & 255) + ((b & 255) - (a & 255)) * k);
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1);
+}
+function teinteDe(d, x) {
+  if (niveau(d) === 2) return ROUGE;
+  if (d.signature_le) return x.type.couleur;
+  var k = Math.max(0, Math.min(1, (x.part - 0.5) / 0.5));     /* l'orange monte à partir de la moitié du délai */
+  return melange(x.type.couleur, ORANGE, k);
+}
+
+function secteurs(dossiers) {
+  var par = {};
+  dossiers.forEach(function (d) { var t = T.type(d.type_dossier).id; (par[t] = par[t] || []).push(d); });
+  var res = [];
+  T.MATIERES.forEach(function (m) {
+    T.TYPES.forEach(function (t) {
+      if (t.matiere !== m.id || !par[t.id]) return;
+      var l = par[t.id].slice().sort(function (a, b) { return (a.date_ouverture || '').localeCompare(b.date_ouverture || '') || a.id - b.id; });
+      res.push({ type: t, matiere: m, tous: l });
+    });
+  });
+  return res;
+}
+
+function dessiner() {
+  var carte = $('carte'); carte.textContent = '';
+  var actifs = etat.dossiers.filter(actif);
+  var classes = etat.dossiers.filter(function (d) { return !actif(d); });
+  $('n-classes').textContent = classes.length;
+  $('compte-dossiers').textContent = actifs.length + (actifs.length > 1 ? ' dossiers ouverts' : ' dossier ouvert');
+
+  var defs = sv('defs'); carte.appendChild(defs);
+  defs.innerHTML = '<radialGradient id="halo-hud"><stop offset="0%" stop-color="#33838B" stop-opacity=".5"/><stop offset="68%" stop-color="#0F2238" stop-opacity=".3"/><stop offset="100%" stop-color="#081625" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="reacteur-hud"><stop offset="0%" stop-color="#EAFEFF" stop-opacity=".95"/><stop offset="40%" stop-color="#6DD5DC" stop-opacity=".55"/><stop offset="100%" stop-color="#33838B" stop-opacity="0"/></radialGradient>' +
+    '<filter id="lueur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2" result="f"/><feMerge><feMergeNode in="f"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+    '<radialGradient id="ecran-hud" cx="50%" cy="42%" r="72%"><stop offset="0%" stop-color="#17384F"/><stop offset="62%" stop-color="#102A40"/><stop offset="100%" stop-color="#0A1C2C"/></radialGradient>';
+
+  coeur(carte);
+  var lots = secteurs(actifs);
+  dessinerRepli(lots);
+  if (!lots.length) {
+    carte.appendChild(sv('circle', { cx: CX, cy: CY, r: R1, fill: 'none', stroke: '#27425B', 'stroke-dasharray': '2 7' }));
+    var v = sv('text', { 'class': 'vide-arc', x: CX, y: CY + R1 + 26, 'text-anchor': 'middle' });
+    v.textContent = 'Aucun dossier ouvert — « Nouveau dossier » pour commencer'; carte.appendChild(v);
+    $('carte').setAttribute('viewBox', (CX - R_MAT - 30) + ' ' + (CY - R_MAT - 30) + ' ' + (2 * R_MAT + 60) + ' ' + (2 * R_MAT + 80));
+    if (etat.choisi == null) panneauATraiter();
+    return;
+  }
+
+  /* largeur de chaque secteur : proportionnelle à ses dossiers, avec un minimum pour que son titre tienne */
+  var rT = R_COEUR + 12;
+  var besoins = lots.map(function (l) { return Math.min(70, ((l.type.court.length + 3) * 6.6 / rT) * 180 / Math.PI + 6); });
+  var total = actifs.length;
+  var spans = lots.map(function (l) { return l.tous.length * 360 / total; });
+  if (lots.length === 1) spans = [360];
+  else for (var tour = 0; tour < 6; tour++) {
+    spans = spans.map(function (x, i) { return Math.max(x, besoins[i]); });
+    var somme = spans.reduce(function (a, b) { return a + b; }, 0);
+    spans = spans.map(function (x) { return x * 360 / somme; });
+  }
+  /* taille des écussons : elle suit l'écart le plus serré au départ des rayons */
+  var pasMin = Math.min.apply(null, spans.map(function (s, i) { return s / lots[i].tous.length; }));
+  var debut = -90 - spans[0] / 2, recherche = sansAccent($('recherche').value.trim());
+  var aPlacer = [], ecussons = [], allumage = 0, matPrec = null, matDebut = 0;
+  var traitsMat = [];
+
+  lots.forEach(function (lot, n) {
+    var t = lot.type, span = spans[n], a1 = debut + (lots.length > 1 ? 0.8 : 0), a2 = debut + span - (lots.length > 1 ? 0.8 : 0);
+    var plein = lots.length === 1;
+    /* bande du secteur sur l'anneau */
+    var dBande = plein ? 'M' + (CX + R_ANNEAU) + ',' + CY + ' a' + R_ANNEAU + ',' + R_ANNEAU + ' 0 1 1 -' + (2 * R_ANNEAU) + ',0 a' + R_ANNEAU + ',' + R_ANNEAU + ' 0 1 1 ' + (2 * R_ANNEAU) + ',0' : arcD(R_ANNEAU, a1, a2);
+    carte.appendChild(sv('path', { d: dBande, fill: 'none', stroke: t.couleur, 'stroke-opacity': '.85', 'stroke-width': '9' }));
+    var flux = sv('path', { 'class': 'influx', d: dBande, stroke: '#EAFEFF', 'stroke-opacity': '.45' });
+    flux.style.setProperty('--long', Math.round(R_ANNEAU * rad(a2 - a1))); flux.style.setProperty('--vitesse', (4 + lot.tous.length * 0.6).toFixed(1) + 's');
+    carte.appendChild(flux);
+    /* graduations (quarts du délai moyen) et bord = délai moyen */
+    GRADUATIONS.forEach(function (g) {
+      var r = rayonDe(g);
+      carte.appendChild(sv('path', { d: plein ? cercleD(r) : arcD(r, a1, a2), fill: 'none', stroke: t.couleur, 'stroke-opacity': '.16', 'stroke-width': '1', 'stroke-dasharray': '2 5' }));
+    });
+    carte.appendChild(sv('path', { d: plein ? cercleD(R1) : arcD(R1, a1, a2), fill: 'none', stroke: t.couleur, 'stroke-opacity': '.55', 'stroke-width': '1.6' }));
+    /* séparation entre secteurs */
+    if (!plein) {
+      var s1 = surCercle(debut, R_ANNEAU - 6), s2 = surCercle(debut, R_SIGNES + 14);
+      carte.appendChild(sv('line', { x1: s1[0].toFixed(1), y1: s1[1].toFixed(1), x2: s2[0].toFixed(1), y2: s2[1].toFixed(1), stroke: '#1E3A54', 'stroke-width': '1' }));
+    }
+    /* durée moyenne inscrite au bord */
+    var duree = lot.tous.length === 1 ? T.delais(lot.tous[0], etat.aujourdhui).duree : null;
+    var libBord = t.mois ? t.mois + ' MOIS' : (t.ajustable && duree && duree !== t.delai ? duree : t.delai) + ' J';
+    var pb = surCercle((a1 + a2) / 2, R1 + 11);
+    var tb = sv('text', { 'class': 'borne', x: pb[0].toFixed(1), y: (pb[1] + 3).toFixed(1), 'text-anchor': 'middle', fill: t.couleur });
+    tb.textContent = libBord; carte.appendChild(tb);
+    ecussons.push({ x: pb[0], y: pb[1], m: 18 });
+
+    /* titre du secteur, le long de l'anneau, à rebours en bas pour se lire de gauche à droite */
+    var milieu = (a1 + a2) / 2, bas = Math.sin(rad(milieu)) > 0.2;
+    var b1 = plein ? -150 : a1, b2 = plein ? -30 : a2;
+    var pa = surCercle(bas ? b2 : b1, rT), pz = surCercle(bas ? b1 : b2, rT);
+    var chemin = sv('path', { id: 'titre-' + t.id, fill: 'none', d: 'M' + pa[0].toFixed(1) + ',' + pa[1].toFixed(1) + ' A' + rT + ',' + rT + ' 0 ' + ((b2 - b1) > 180 ? 1 : 0) + ' ' + (bas ? 0 : 1) + ' ' + pz[0].toFixed(1) + ',' + pz[1].toFixed(1) });
+    defs.appendChild(chemin);
+    var tt = sv('text', { 'class': 'titre-arc', fill: t.couleur, dy: bas ? '7' : '0' });
+    var tp = sv('textPath', { href: '#titre-' + t.id, startOffset: '50%', 'text-anchor': 'middle' });
+    tp.textContent = (span < besoins[n] - 2 ? t.court.split(' ')[0] : t.court) + '  ' + lot.tous.length;
+    tt.appendChild(tp); carte.appendChild(tt);
+
+    /* arc de matière, tout à l'extérieur */
+    if (lot.matiere.id !== matPrec) { if (matPrec) traitsMat.push({ m: traitsMat.m, a1: matDebut, a2: debut }); matPrec = lot.matiere.id; matDebut = debut; traitsMat.m = lot.matiere; }
+
+    /* les dossiers, chacun sur son rayon */
+    var pas = (a2 - a1) / lot.tous.length;
+    lot.tous.forEach(function (d, i) {
+      var x = T.delais(d, etat.aujourdhui);
+      var ang = a1 + pas * (i + 0.5);
+      var r = d.signature_le ? R_SIGNES : rayonDe(x.part);
+      var m = surCercle(ang, r), xm = m[0], ym = m[1];
+      var niv = niveau(d), teinte = teinteDe(d, x), rappelDu = d.rappels_echus > 0;
+      var g = sv('g', { 'class': 'module', tabindex: '0', role: 'button' });
+      g.setAttribute('aria-label', d.intitule + ', ' + t.nom);
+      g.dataset.id = d.id;
+      var cherche = sansAccent([d.intitule, d.partie1, d.partie2, d.numero, d.nom_outlook, t.nom].join(' '));
+      if (recherche && cherche.indexOf(recherche) < 0) g.classList.add('eteint');
+      if (etat.choisi === d.id) g.classList.add('choisi');
+      aPlacer.push({ g: g, d: d, ang: ang, r: r, teinte: teinte, niv: niv, rappelDu: rappelDu, signe: !!d.signature_le, sab: T.sablier(d, etat.aujourdhui), rang: allumage++ });
+      g.addEventListener('mouseenter', function () { montrer(d); });
+      g.addEventListener('focus', function () { montrer(d); });
+      g.addEventListener('click', function () { ouvrir(d.id); });
+      g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrir(d.id); } });
+      carte.appendChild(g);
+    });
+    debut += span;
+  });
+  traitsMat.push({ m: traitsMat.m, a1: matDebut, a2: debut });
+  traitsMat.forEach(function (tm, i) {
+    var plein = traitsMat.length === 1 && lots.length > 0 && Math.abs(tm.a2 - tm.a1 - 360) < 0.5;
+    var a1 = tm.a1 + 1.5, a2 = tm.a2 - 1.5;
+    carte.appendChild(sv('path', { d: plein ? cercleD(R_MAT) : arcD(R_MAT, a1, a2), fill: 'none', stroke: tm.m.couleur, 'stroke-opacity': '.5', 'stroke-width': '2', 'stroke-linecap': 'round' }));
+    var mil = plein ? -90 : (a1 + a2) / 2, bas = Math.sin(rad(mil)) > 0.2, rr = R_MAT + (bas ? 15 : 8);
+    var c1 = plein ? -130 : a1, c2 = plein ? -50 : a2;
+    var pa = surCercle(bas ? c2 : c1, rr), pz = surCercle(bas ? c1 : c2, rr);
+    defs.appendChild(sv('path', { id: 'mat-' + i, fill: 'none', d: 'M' + pa[0].toFixed(1) + ',' + pa[1].toFixed(1) + ' A' + rr + ',' + rr + ' 0 ' + ((c2 - c1) > 180 ? 1 : 0) + ' ' + (bas ? 0 : 1) + ' ' + pz[0].toFixed(1) + ',' + pz[1].toFixed(1) }));
+    var t = sv('text', { 'class': 'titre-mat', fill: tm.m.couleur });
+    var tp = sv('textPath', { href: '#mat-' + i, startOffset: '50%', 'text-anchor': 'middle' });
+    tp.textContent = tm.m.nom.toUpperCase(); t.appendChild(tp); carte.appendChild(t);
+  });
+  poserBarres(aPlacer, Math.max(9, Math.min(16, R_ANNEAU * rad(pasMin) * 0.62)), pasMin);
+  cadrer(aPlacer);
+  setTimeout(function () { carte.querySelectorAll('.segment.allumage').forEach(function (n) { n.classList.remove('allumage'); }); }, 1600);
+  if (etat.choisi == null) panneauATraiter();
+}
+function cercleD(r) { return 'M' + (CX + r) + ',' + CY + ' a' + r + ',' + r + ' 0 1 1 -' + (2 * r) + ',0 a' + r + ',' + r + ' 0 1 1 ' + (2 * r) + ',0'; }
+
+/* Chaque dossier est une barre posée sur son rayon, dont un côté touche l'anneau du centre.
+   La barre court jusqu'au bord du secteur (le délai moyen du type) ; sa partie pleine
+   montre le temps écoulé, et sa teinte vire à l'orange à l'approche du délai.
+   Le nom du dossier est écrit dans la barre, dans le sens de la lecture. */
+var FORME = 'eventail';   /* 'segments' (barre à segments, façon PHARE), 'eventail' (part d'anneau), 'jauge' (barre pleine) */
+function secteurD(a1, a2, r1, r2) {
+  var p1 = surCercle(a1, r1), p2 = surCercle(a1, r2), p3 = surCercle(a2, r2), p4 = surCercle(a2, r1), g = (a2 - a1) > 180 ? 1 : 0;
+  return 'M' + p1[0].toFixed(1) + ',' + p1[1].toFixed(1) + ' L' + p2[0].toFixed(1) + ',' + p2[1].toFixed(1) +
+    ' A' + r2 + ',' + r2 + ' 0 ' + g + ' 1 ' + p3[0].toFixed(1) + ',' + p3[1].toFixed(1) + ' L' + p4[0].toFixed(1) + ',' + p4[1].toFixed(1) +
+    ' A' + r1 + ',' + r1 + ' 0 ' + g + ' 0 ' + p1[0].toFixed(1) + ',' + p1[1].toFixed(1) + ' Z';
+}
+function poserBarres(liste, largeur, pas) {
+  var w = largeur, debutB = R_ANNEAU + 7, taille = Math.max(7.5, Math.min(10, w - 4));
+  liste.forEach(function (e) {
+    var g = e.g, teinte = e.teinte, ang = e.ang, t = T.type(e.d.type_dossier);
+    var fin = e.signe ? R_SIGNES : Math.max(R1, e.r), plein = e.signe ? R_SIGNES : Math.max(debutB + 4, e.r);
+    var rot = 'rotate(' + ang.toFixed(2) + ' ' + CX + ' ' + CY + ')', y = CY - w / 2;
+    var couleurA = function (r) { /* la couleur suit la position : teinte du type, puis orange après la moitié du délai */
+      if (e.niv) return ROUGE; if (e.signe) return t.couleur;
+      var part = (r - R0) / (R1 - R0); return melange(t.couleur, ORANGE, Math.max(0, Math.min(1, (part - 0.5) / 0.5)));
+    };
+    if (FORME === 'eventail') {
+      var dA = Math.min(pas * 0.42, 14);
+      g.appendChild(sv('path', { 'class': 'cadre-survol', d: secteurD(ang - dA - 0.8, ang + dA + 0.8, debutB - 3, fin + 3), fill: 'none', stroke: teinte, 'stroke-width': '1.2' }));
+      g.appendChild(sv('path', { 'class': 'ecusson', d: secteurD(ang - dA, ang + dA, debutB, fin), fill: t.couleur, 'fill-opacity': '.07', stroke: t.couleur, 'stroke-opacity': '.35', 'stroke-width': '1' }));
+      var part = sv('path', { 'class': 'segment allumage', d: secteurD(ang - dA, ang + dA, debutB, plein), fill: 'url(#deg-' + e.d.id + ')', opacity: e.signe ? '.5' : '.9', 'pointer-events': 'none', filter: 'url(#lueur)' });
+      var p0 = surCercle(ang, debutB), p1 = surCercle(ang, R1);
+      var deg = sv('linearGradient', { id: 'deg-' + e.d.id, gradientUnits: 'userSpaceOnUse', x1: p0[0].toFixed(1), y1: p0[1].toFixed(1), x2: p1[0].toFixed(1), y2: p1[1].toFixed(1) });
+      [[0, couleurA(R0)], [0.5, couleurA(R0 + (R1 - R0) * 0.5)], [1, couleurA(R1)]].forEach(function (st) { deg.appendChild(sv('stop', { offset: st[0], 'stop-color': st[1] })); });
+      $('carte').querySelector('defs').appendChild(deg);
+      part.style.setProperty('--opf', e.signe ? '.5' : '.9'); part.style.animationDelay = (80 + e.rang * 35) + 'ms';
+      g.appendChild(part);
+      /* liseré lumineux au front de progression */
+      if (!e.signe) g.appendChild(sv('path', { d: arcD(plein, ang - dA, ang + dA), fill: 'none', stroke: '#F4FBFD', 'stroke-width': '1.6', 'stroke-opacity': '.85', 'pointer-events': 'none' }));
+    } else if (FORME === 'segments') {
+      var seg = 7, inter = 2.4, n = 0;
+      g.appendChild(sv('rect', { 'class': 'cadre-survol', x: CX + debutB - 4, y: (y - 4).toFixed(1), width: (fin - debutB + 8).toFixed(1), height: (w + 8).toFixed(1), rx: '3', fill: 'none', stroke: teinte, 'stroke-width': '1.1', transform: rot }));
+      g.appendChild(sv('rect', { 'class': 'ecusson', x: CX + debutB, y: y.toFixed(1), width: (fin - debutB).toFixed(1), height: w.toFixed(1), fill: 'transparent', stroke: 'none', transform: rot }));
+      var blocs = sv('g', { transform: rot, 'pointer-events': 'none' }), lueur = sv('g', { transform: rot, 'pointer-events': 'none', filter: 'url(#lueur)' });
+      for (var r = debutB; r + seg <= fin + 0.5; r += seg + inter, n++) {
+        var allume = r + seg / 2 <= plein;
+        var rc = sv('rect', { x: (CX + r).toFixed(1), y: y.toFixed(1), width: seg, height: w.toFixed(1), rx: '1', fill: allume ? couleurA(r + seg / 2) : t.couleur, opacity: allume ? (e.signe ? '.5' : '.92') : '.10' });
+        if (allume) { rc.setAttribute('class', 'segment allumage'); rc.style.setProperty('--opf', e.signe ? '.5' : '.92'); rc.style.animationDelay = (80 + e.rang * 30 + n * 22) + 'ms'; lueur.appendChild(rc); }
+        else blocs.appendChild(rc);
+      }
+      g.appendChild(blocs); g.appendChild(lueur);
     } else {
-      E("dDrive").textContent = "Jeton obtenu, mais le Drive répond "+r.status+".";
-      noter("Drive /about : HTTP "+r.status);
+      g.appendChild(sv('rect', { 'class': 'cadre-survol', x: CX + debutB - 3, y: (y - 3).toFixed(1), width: (fin - debutB + 6).toFixed(1), height: (w + 6).toFixed(1), rx: '4', fill: 'none', stroke: teinte, 'stroke-width': '1.2', transform: rot }));
+      g.appendChild(sv('rect', { 'class': 'ecusson', x: CX + debutB, y: y.toFixed(1), width: (fin - debutB).toFixed(1), height: w.toFixed(1), rx: '2.5', fill: '#0C2134', stroke: teinte, 'stroke-opacity': '.55', 'stroke-width': '1.1', transform: rot }));
+      var rem = sv('rect', { 'class': 'segment allumage', x: CX + debutB, y: y.toFixed(1), width: Math.max(4, plein - debutB).toFixed(1), height: w.toFixed(1), rx: '2.5', fill: teinte, opacity: e.signe ? '.45' : '.85', transform: rot, 'pointer-events': 'none' });
+      rem.style.setProperty('--opf', e.signe ? '.45' : '.85'); rem.style.animationDelay = (80 + e.rang * 35) + 'ms';
+      g.appendChild(rem);
     }
-  }catch(e){ noter("Drive /about : "+e.message); }
-  clearTimeout(minuteur);
-  minuteur = setTimeout(expirer, Math.max(1000, FidalAcces.expiration()-Date.now()));
-}
-function expirer(){
-  FidalAcces.oublier();
-  voyant("vDrive","attente");
-  E("eDrive").textContent = "Accès expiré.";
-  E("dDrive").textContent = "Le jeton Google dure une heure. Renouvelez l'accès si vous avez encore besoin du Drive.";
-  E("btnOuvrir").textContent = "Renouveler l'accès";
-  E("btnOuvrir").disabled = false;
-  E("mot").textContent = "";
-  noter("Jeton expiré.");
-}
-async function connecter(interactif){
-  E("mot").textContent = interactif ? "Ouverture de la fenêtre Google…" : "Reprise de l'accord déjà donné…";
-  const j = await FidalAcces.jeton({interactif});
-  if(j){ await afficherConnexion(j); E("avisOrigine").hidden = true; if(interactif) lancerVeille(false); chargerChantiers(j); return true; }
-  if(interactif){
-    voyant("vDrive","ko");
-    E("eDrive").textContent = "Connexion refusée ou fenêtre fermée.";
-    E("mot").textContent = "Réessayez, ou vérifiez que la fenêtre Google n'a pas été bloquée.";
-    /* si l'origine n'est pas autorisée sur le client OAuth, Google le dit dans la console ; on prévient */
-    E("avisOrigine").hidden = false;
-    noter("Connexion interactive : aucun jeton.");
-  } else {
-    voyant("vDrive","");
-    E("eDrive").textContent = "Non connecté.";
-    E("mot").textContent = "Cliquez pour donner l'accord du jour.";
-    noter("Reprise silencieuse : aucun jeton (normal au premier accès de la journée).");
-  }
-  return false;
-}
-E("btnOuvrir").onclick = () => connecter(true);
-E("btnRenouveler").onclick = () => connecter(true);
-
-/* Au chargement : si un accord a déjà été donné aujourd'hui, on tente la reprise
-   silencieuse. Le navigateur peut la bloquer (fenêtre non demandée) : le bouton reste. */
-(async () => {
-  const etat = FidalAcces.etat();
-  if(etat && etat.derniereConnexion){
-    E("mot").textContent = "Dernière connexion : "+dateFr(etat.derniereConnexion)+" à "+heure(etat.derniereConnexion)+
-                           (etat.compte ? " ("+etat.compte+")" : "")+".";
-    const aujourdhui = dateFr(etat.derniereConnexion) === dateFr(Date.now());
-    if(aujourdhui){ const ok = await connecter(false); if(ok) lancerVeille(false); return; }
-  }
-  E("mot").textContent = "Cliquez pour donner l'accord du jour.";
-})();
-
-/* ---------- Base de réglages ---------- */
-(async () => {
-  try{
-    const r = await fetch(API+"?outil=carto&cle=arbitrages",{cache:"no-store"});
-    if(!r.ok && r.status!==404) throw new Error("HTTP "+r.status);
-    voyant("vBase","ok");
-    E("eBase").textContent = "Accessible.";
-    noter("Base de réglages : accessible (HTTP "+r.status+").");
-  }catch(e){
-    voyant("vBase","ko");
-    E("eBase").textContent = "Injoignable.";
-    E("dBase").textContent = "Les outils fonctionneront avec leurs réglages locaux. "+e.message;
-    noter("Base de réglages : "+e.message);
-  }
-})();
-
-/* ---------- Arrêtés préfectoraux : la veille XYLO ----------
-   Le journal VEILLE.md du dépôt XYLO est public : on y lit la dernière moisson.
-   « Ouvrir la journée » déclenche la veille si elle n'a pas encore tourné
-   aujourd'hui (le cron Vercel est approximatif et saute parfois un jour) ;
-   la réponse du service n'est pas lisible depuis cette page (pas d'entête
-   d'origine croisée), on confirme donc en relisant le journal. La date est
-   ensuite notée dans la base de réglages (outil « connexion », clé « bases »). */
-const XYLO_VEILLE  = "https://xylo-phi.vercel.app/api/veille";
-const XYLO_JOURNAL = "https://raw.githubusercontent.com/FIDAL-NOTAIRES/xylo/main/VEILLE.md";
-const XYLO_JOURNAL_PAGE = "https://github.com/FIDAL-NOTAIRES/xylo/blob/main/VEILLE.md";
-const XYLO_INDEX = "https://xylo-phi.vercel.app/index-arretes.html";
-let veilleEnCours = false;
-
-const XYLO_JOURNAL_API = "https://api.github.com/repos/FIDAL-NOTAIRES/xylo/contents/VEILLE.md";
-/* Le canal brut de GitHub est mis en cache jusqu'à cinq minutes : pour voir une
-   veille qui vient de s'écrire, on lit d'abord par l'interface GitHub (sans cache),
-   et l'on se replie sur le canal brut si elle refuse (quota horaire). */
-async function lireJournal(){
-  let txt = null;
-  try{
-    const r = await fetch(XYLO_JOURNAL_API+"?t="+Date.now(), {cache:"no-store", headers:{Accept:"application/vnd.github.raw+json"}});
-    if(r.ok) txt = await r.text();
-  }catch(e){ /* repli ci-dessous */ }
-  if(txt===null){
-    const r = await fetch(XYLO_JOURNAL+"?t="+Date.now(), {cache:"no-store"});
-    if(!r.ok) throw new Error("journal HTTP "+r.status);
-    txt = await r.text();
-  }
-  const entrees = [];
-  const re = /^## (\d{2})\/(\d{2})\/(\d{4}) — (.+?)\s*$/gm;
-  let m;
-  while((m = re.exec(txt))){
-    const date = new Date(+m[3], +m[2]-1, +m[1]).getTime();
-    const suite = txt.slice(m.index + m[0].length, m.index + m[0].length + 400);
-    const stats = (suite.match(/Moisson en ([\d.,]+) s · (\d+) départements, (\d+) communes/)||[]);
-    entrees.push({date, titre:m[4], secondes:stats[1]||null, departements:stats[2]||null, communes:stats[3]||null,
-                  ecarts: /aucun écart/.test(m[4]) ? 0 : (parseInt(m[4],10)||0)});
-  }
-  return entrees;
-}
-function memeJour(a,b){ return dateFr(a)===dateFr(b); }
-
-function afficherVeille(entrees, note){
-  const d = entrees[0];
-  const l = E("lVeille");
-  if(!d){ voyant("vVeille","ko"); E("eVeille").textContent = "Journal de veille vide ou illisible."; l.innerHTML=""; return; }
-  const age = Math.floor((Date.now()-d.date)/86400000);
-  const auj = memeJour(d.date, Date.now());
-  voyant("vVeille", auj ? "ok" : (age<=2 ? "attente" : "ko"));
-  E("eVeille").textContent = auj ? "Veille faite aujourd'hui." : (age===1 ? "Dernière veille hier." : "Dernière veille il y a "+age+" jours.");
-  l.innerHTML =
-    `<li><span>Moisson</span><span>${dateFr(d.date)}, ${d.ecarts ? d.ecarts+" écart(s)" : "aucun écart"}</span></li>`+
-    (d.communes ? `<li><span>Référentiel</span><span>${d.communes} communes, ${d.departements} dép.</span></li>` : "")+
-    `<li><span><a href="${XYLO_JOURNAL_PAGE}" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">Journal ↗</a></span><span><a href="${XYLO_INDEX}" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">Index des arrêtés ↗</a></span></li>`+
-    (note ? `<li><span style="color:var(--orange)">${note}</span><span></span></li>` : "");
-  E("btnVeille").hidden = false;
-  E("btnVeille").disabled = veilleEnCours;
-}
-
-async function noterBase(cle, info){
-  try{
-    let bases = {};
-    const r = await fetch(API+"?outil=connexion&cle=bases",{cache:"no-store"});
-    if(r.ok){ const d = await r.json(); if(d && d.valeur && typeof d.valeur==="object") bases = d.valeur; }
-    bases[cle] = Object.assign({}, bases[cle]||{}, info, {controle: Date.now()});
-    await fetch(API+"?outil=connexion&cle=bases",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(bases)});
-    noter("Base de réglages : date de veille "+cle+" notée.");
-  }catch(e){ noter("Base de réglages : "+e.message); }
-}
-
-async function verifierVeille(){
-  try{
-    const entrees = await lireJournal();
-    afficherVeille(entrees);
-    if(entrees[0]) noterBase("xylo", {nom:"Arrêtés termites et mérule (XYLO)", date:entrees[0].date, ecarts:entrees[0].ecarts});
-    noter("Veille XYLO : dernière entrée du journal "+(entrees[0]?dateFr(entrees[0].date):"aucune")+".");
-    return entrees;
-  }catch(e){
-    voyant("vVeille","ko"); E("eVeille").textContent = "Journal de veille injoignable."; noter("Veille XYLO : "+e.message);
-    return null;
-  }
-}
-
-/* Déclenche la veille puis attend son inscription au journal (jusqu'à 7 minutes). */
-async function lancerVeille(force){
-  if(veilleEnCours) return;
-  const avant = await lireJournal().catch(()=>[]);
-  if(!force && avant[0] && memeJour(avant[0].date, Date.now())){ afficherVeille(avant); return; }
-  veilleEnCours = true;
-  voyant("vVeille","attente"); E("eVeille").textContent = "Veille en cours…"; E("btnVeille").disabled = true;
-  noter("Veille XYLO : déclenchement de "+XYLO_VEILLE);
-  try{ await fetch(XYLO_VEILLE, {mode:"no-cors", cache:"no-store"}); }catch(e){ noter("Veille XYLO : appel "+e.message); }
-  const depart = Date.now();
-  const attendre = async () => {
-    const entrees = await lireJournal().catch(()=>null);
-    if(entrees && entrees[0] && memeJour(entrees[0].date, Date.now()) && (!avant[0] || entrees[0].date!==avant[0].date || force && Date.now()-depart>20000)){
-      veilleEnCours = false;
-      afficherVeille(entrees);
-      noterBase("xylo", {nom:"Arrêtés termites et mérule (XYLO)", date:entrees[0].date, ecarts:entrees[0].ecarts});
-      noter("Veille XYLO : terminée, "+(entrees[0].ecarts||"aucun")+" écart(s).");
-      return;
+    /* le nom, dans la barre ; à gauche de l'anneau on le retourne pour qu'il se lise de gauche à droite */
+    var dispo = fin - debutB - 12, nom = nomCourt(e.d), max = Math.floor(dispo / (taille * 0.66));
+    if (nom.length > max) nom = nom.slice(0, Math.max(3, max - 1)) + '…';
+    var gauche = Math.cos(rad(ang)) < -0.01;
+    var tx = sv('text', { 'class': 'barre-nom', 'font-size': taille.toFixed(1), y: (CY + taille * 0.36).toFixed(1),
+      x: gauche ? (CX - debutB - 7).toFixed(1) : (CX + debutB + 7).toFixed(1), 'text-anchor': gauche ? 'end' : 'start',
+      fill: e.niv ? '#FFC2D2' : '#F2F8FB', transform: 'rotate(' + (gauche ? ang + 180 : ang).toFixed(2) + ' ' + CX + ' ' + CY + ')' });
+    tx.textContent = nom; g.appendChild(tx);
+    var bout = surCercle(ang, fin + 11);
+    if (e.rappelDu || e.signe) g.appendChild(sv('use', { href: '#' + (e.rappelDu ? 'i-cloche' : 'i-plume'), x: (bout[0] - 7).toFixed(1), y: (bout[1] - 7).toFixed(1), width: 14, height: 14, color: e.rappelDu ? ORANGE : teinte, 'pointer-events': 'none' }));
+    /* sablier : au-delà de la cloche s'il y en a une ; un clic réajuste la date limite */
+    var decal = (e.rappelDu || e.signe) ? 25 : 11;
+    if (e.sab) {
+      var ps = surCercle(ang, fin + decal), gs = sv('g', { 'class': 'sablier' + (e.sab === 'depasse' ? ' clignote' : ''), role: 'button', tabindex: '0' });
+      gs.setAttribute('aria-label', e.sab === 'depasse' ? 'Date limite dépassée : réajuster' : 'Date limite dans moins de 3 jours : réajuster');
+      gs.appendChild(sv('circle', { 'class': 'zone-sab', cx: ps[0].toFixed(1), cy: ps[1].toFixed(1), r: '10' }));
+      gs.appendChild(sv('use', { href: '#i-sablier', x: (ps[0] - 7.5).toFixed(1), y: (ps[1] - 7.5).toFixed(1), width: 15, height: 15, color: e.sab === 'depasse' ? ORANGE : '#FFB667', 'pointer-events': 'none' }));
+      var ouvrirReport = function (ev) { ev.stopPropagation(); ev.preventDefault(); reporterDelai(e.d); };
+      gs.addEventListener('click', ouvrirReport);
+      gs.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') ouvrirReport(ev); });
+      g.appendChild(gs);
+      decal += 14;
     }
-    if(Date.now()-depart > 420000){
-      veilleEnCours = false;
-      afficherVeille(entrees||avant, "La veille n'apparaît pas au journal après sept minutes : elle a probablement échoué. Réessayez, ou consultez les journaux du service.");
-      noter("Veille XYLO : pas de confirmation après 7 minutes.");
-      return;
+    if (e.rappelDu || e.niv) { var pt = surCercle(ang, fin + (e.rappelDu || e.signe || e.sab ? decal - 1 : 9)); g.appendChild(sv('circle', { 'class': 'pulse', cx: pt[0].toFixed(1), cy: pt[1].toFixed(1), r: '3.6', fill: e.niv ? ROUGE : ORANGE, stroke: '#0A1C2C', 'stroke-width': '1.2' })); }
+  });
+}
+function cadrer(liste) {
+  var R = R_MAT + 24, x0 = CX - R, x1 = CX + R, y0 = CY - R, y1 = CY + R;
+  liste.forEach(function (e) { var b = e.boite; if (!b) return; x0 = Math.min(x0, b.x0); x1 = Math.max(x1, b.x1); y0 = Math.min(y0, b.y0); y1 = Math.max(y1, b.y1); });
+  var m = 10;
+  $('carte').setAttribute('viewBox', Math.round(x0 - m) + ' ' + Math.round(y0 - m) + ' ' + Math.round(x1 - x0 + 2 * m) + ' ' + Math.round(y1 - y0 + 2 * m));
+}
+
+/* Le cœur : le nombre de choses à traiter aujourd'hui, la date et le signet liturgique */
+function coeur(carte) {
+  var O = 'transform-origin:' + CX + 'px ' + CY + 'px';
+  carte.appendChild(sv('circle', { cx: CX, cy: CY, r: R_COEUR, fill: 'url(#ecran-hud)', stroke: '#2A5872', 'stroke-width': '1.2' }));
+  var g = sv('g', { 'class': 'coeur', 'pointer-events': 'none' }); carte.appendChild(g);
+  g.appendChild(sv('circle', { cx: CX, cy: CY, r: R_COEUR + 10, fill: 'url(#halo-hud)', 'class': 'halo-coeur' }));
+  // l'anneau extérieur du cadran prend la couleur liturgique du jour (le signet)
+  var ext = sv('g', { 'class': 'gire', style: O + ';--tour:44s' });
+  [0, 90, 180, 270].forEach(function (a) { ext.appendChild(sv('path', { d: arcD(R_COEUR - 10, a + 5, a + 78), fill: 'none', stroke: etat.signet || '#33838B', 'stroke-opacity': '.85', 'stroke-width': '2.2', 'stroke-linecap': 'round' })); });
+  g.appendChild(ext);
+  var grad = sv('g', { stroke: '#2F5873' });
+  for (var k = 0; k < 72; k++) {
+    var a = k * 5, longue = k % 9 === 0, p = surCercle(a, R_COEUR - 24), q = surCercle(a, longue ? R_COEUR - 14 : R_COEUR - 19);
+    grad.appendChild(sv('line', { x1: p[0].toFixed(1), y1: p[1].toFixed(1), x2: q[0].toFixed(1), y2: q[1].toFixed(1), 'stroke-width': longue ? '1.6' : '1', 'stroke-opacity': longue ? '.95' : '.45' }));
+  }
+  g.appendChild(grad);
+  g.appendChild(sv('circle', { cx: CX, cy: CY, r: R_COEUR - 42, fill: 'none', stroke: '#6DD5DC', 'stroke-opacity': '.3', 'stroke-width': '1.2', 'stroke-dasharray': '3 8', 'class': 'gire-inv', style: O + ';--tour:30s' }));
+  g.appendChild(sv('circle', { cx: CX, cy: CY - 46, r: 16, fill: 'url(#reacteur-hud)', 'class': 'reacteur', style: 'transform-origin:' + CX + 'px ' + (CY - 46) + 'px' }));
+  g.appendChild(sv('circle', { cx: CX, cy: CY - 46, r: 4.5, fill: '#DFFBFF' }));
+  var n = aTraiter().length;
+  var c = sv('text', { 'class': 'compte' + (n ? ' chaud' : ''), x: CX, y: CY + 22, 'text-anchor': 'middle' }); c.textContent = n;
+  var l1 = sv('text', { 'class': 'indic-fort', x: CX, y: CY + 44, 'text-anchor': 'middle' }); l1.textContent = n ? 'À TRAITER' : 'RIEN À TRAITER';
+  var l2 = sv('text', { 'class': 'indic', x: CX, y: CY + 64, 'text-anchor': 'middle' });
+  l2.textContent = new Date(etat.aujourdhui + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).toUpperCase();
+  g.appendChild(c); g.appendChild(l1); g.appendChild(l2);
+  var zone = sv('circle', { 'class': 'coeur-clic', cx: CX, cy: CY, r: R_COEUR, fill: 'transparent', tabindex: '0', role: 'button', 'aria-label': 'Ce qu’il y a à traiter aujourd’hui' });
+  zone.addEventListener('click', function () { etat.choisi = null; marquerChoisi(); panneauATraiter(); });
+  carte.appendChild(zone);
+}
+
+/* ---------- Le panneau déporté ---------- */
+function marquerChoisi() { document.querySelectorAll('#carte .module').forEach(function (m) { m.classList.toggle('choisi', +m.dataset.id === etat.choisi); }); }
+function avancement(d) {
+  var x = T.delais(d, etat.aujourdhui), t = x.type;
+  if (d.signature_le) return { texte: 'Signé le ' + fr(d.signature_le) + ' — classement le ' + fr(d.classe_le), classe: '' };
+  var base = t.depuis === 'deces' ? 'Délai fiscal (6 mois après le décès)' : 'Délai moyen ' + x.duree + ' jours';
+  if (x.decesManquant) return { texte: 'Date de décès à renseigner — délai compté depuis l’ouverture, au ' + fr(x.fin), classe: 'alerte' };
+  if (x.reportee) base = 'Date limite réajustée';
+  if (x.reste < 0) return { texte: base + ' dépassé' + (x.reportee ? 'e' : '') + ' de ' + (-x.reste) + ' jour' + (x.reste < -1 ? 's' : '') + ' (' + fr(x.fin) + ')', classe: 'alerte' };
+  if (x.reportee) base = 'Date limite réajustée';
+  return { texte: base + ' : jour ' + x.ecoule + ' sur ' + x.duree + ', échéance au ' + fr(x.fin), classe: x.part >= 0.75 ? 'alerte' : '' };
+}
+function montrer(d) {
+  etat.choisi = d.id; marquerChoisi();
+  var p = $('panneau'); p.textContent = '';
+  var t = T.type(d.type_dossier), m = T.matiere(t.matiere);
+  p.appendChild(el('p', { classe: 'mono haut', style: 'color:' + t.couleur, texte: m.nom + ' · ' + t.nom.replace(/ \(.*\)$/, '') + (d.etape === 'formalites' ? ' · formalités' : d.etape === 'avant_contrat' ? ' · avant-contrat' : '') }));
+  p.appendChild(el('h3', { texte: d.intitule }));
+  p.appendChild(el('p', { texte: 'Dossier Outlook : ' + d.nom_outlook }));
+  var av = avancement(d);
+  p.appendChild(el('p', { classe: av.classe, texte: av.texte }));
+  if (!d.signature_le) {
+    if (d.signature_prevue) p.appendChild(el('p', { classe: signatureDepassee(d) ? 'rouge' : '', texte: 'Signature prévue le ' + fr(d.signature_prevue) + (signatureDepassee(d) ? ' — date dépassée' : '') }));
+    else p.appendChild(el('p', { classe: 'alerte', texte: 'Date de signature à renseigner' }));
+    if (d.prochaine_echeance) p.appendChild(el('p', { classe: echeanceDepassee(d) ? 'rouge' : '', texte: 'Prochaine échéance de l’acte : ' + fr(d.prochaine_echeance) + (echeanceDepassee(d) ? ' — dépassée' : '') }));
+  }
+  p.appendChild(el('p', { texte: '0 relance — ' + (d.dernier_evt ? 'dernier échange le ' + fr(d.dernier_evt) : 'aucun échange') }));
+  if ((d.etude || []).length) p.appendChild(el('p', { texte: 'Étude : ' + d.etude.filter(function (a) { return !T.estPartagee(a); }).map(function (a) { return nomEtude(a) + ((d.etude_relances || []).indexOf(a) >= 0 ? ' (relances)' : ''); }).join(', ') }));
+  if (d.rappels_echus) p.appendChild(el('p', { classe: 'alerte', texte: d.rappels_echus + ' rappel' + (d.rappels_echus > 1 ? 's' : '') + ' dû' + (d.rappels_echus > 1 ? 's' : '') }));
+  else if (d.rappels_ouverts) p.appendChild(el('p', { texte: d.rappels_ouverts + ' rappel' + (d.rappels_ouverts > 1 ? 's' : '') + ' en attente' }));
+  var sab = T.sablier(d, etat.aujourdhui);
+  p.appendChild(el('div', { classe: 'actions' }, [el('button', { classe: 'bouton fort petit', texte: 'Ouvrir le dossier', onclick: function () { ouvrir(d.id); } }),
+    sab ? el('button', { classe: 'bouton petit', texte: sab === 'depasse' ? 'Délai dépassé : réajuster' : 'Réajuster la date limite', onclick: function () { reporterDelai(d); } }) : null]));
+  // rappel en un clic, sans ouvrir le dossier
+  var champ = el('input', { type: 'text', maxlength: '500', placeholder: 'Ajouter un rappel', 'aria-label': 'Texte du rappel' });
+  function poser(delai) { if (!champ.value.trim()) return champ.focus(); api('POST', { action: 'rappel', id: d.id, texte: champ.value, delai: delai }).then(charger).catch(alerte); }
+  p.appendChild(el('div', { classe: 'rapide' }, [champ, el('div', { classe: 'petits' }, [
+    el('button', { classe: 'bouton petit', texte: 'Dans 3 jours ouvrés', onclick: function () { poser(3); } }),
+    el('button', { classe: 'bouton petit', texte: 'Dans 7 jours ouvrés', onclick: function () { poser(7); } })
+  ])]));
+}
+function panneauATraiter() {
+  var p = $('panneau'); p.textContent = '';
+  var l = aTraiter();
+  p.appendChild(el('p', { classe: 'mono haut', style: 'color:' + (l.length ? '#FFB667' : '#6DD5DC'), texte: 'À traiter' }));
+  p.appendChild(el('h3', { texte: l.length ? l.length + (l.length > 1 ? ' points à traiter' : ' point à traiter') : 'Rien à traiter aujourd’hui' }));
+  var ul = el('ul');
+  l.forEach(function (x) {
+    if (x.type === 'rappel') ul.appendChild(el('li', {}, [
+      el('b', { texte: x.r.intitule, onclick: function () { ouvrir(x.r.dossier_id); } }), el('span', { texte: x.r.texte + ' — dû le ' + fr(x.r.echeance) }),
+      el('div', { classe: 'petits' }, [
+        el('button', { classe: 'bouton petit', texte: 'Fait', onclick: function () { rappelAction('rappel_fait', x.r.id); } }),
+        el('button', { classe: 'bouton petit', texte: 'Reporter', onclick: function () { rappelAction('rappel_reporter', x.r.id); } })
+      ])
+    ]));
+    else if (x.type === 'echeance') ul.appendChild(el('li', {}, [
+      el('b', { texte: x.x.intitule, onclick: function () { ouvrir(x.x.dossier_id); } }),
+      el('span', { classe: x.n < 0 ? 'rouge' : '', texte: x.x.libelle + (x.n < 0 ? ' — échéance dépassée (' + fr(x.x.echeance) + ')' : ' — le ' + fr(x.x.echeance) + (x.n === 0 ? ', aujourd’hui' : ', dans ' + x.n + ' jour' + (x.n > 1 ? 's' : ''))) })
+    ]));
+    else if (x.type === 'sablier') ul.appendChild(el('li', {}, [
+      el('b', { texte: x.d.intitule, onclick: function () { ouvrir(x.d.id); } }),
+      el('span', { classe: 'alerte', texte: 'Date limite dépassée (' + fr(x.fin) + ')' }),
+      el('div', { classe: 'petits' }, [el('button', { classe: 'bouton petit', texte: 'Réajuster', onclick: function () { reporterDelai(x.d); } })])
+    ]));
+    else ul.appendChild(el('li', {}, [
+      el('b', { texte: x.d.intitule, onclick: function () { ouvrir(x.d.id); } }),
+      el('span', { classe: x.type === 'depassee' ? 'rouge' : '', texte: x.type === 'depassee' ? 'Date de signature dépassée (' + fr(x.d.signature_prevue) + ')' : 'Signature le ' + fr(x.d.signature_prevue) + (x.n === 0 ? ', aujourd’hui' : ', dans ' + x.n + ' jour' + (x.n > 1 ? 's' : '')) })
+    ]));
+  });
+  if (l.length) p.appendChild(ul);
+  var nAR = etat.releves ? etat.releves.a_rattacher : 0;
+  if (nAR) p.appendChild(el('div', { classe: 'ligne' }, [el('button', { classe: 'bouton fort petit', texte: nAR + (nAR > 1 ? ' mails à rattacher' : ' mail à rattacher'), onclick: ouvrirARattacher })]));
+  p.appendChild(blocReleves());
+  p.appendChild(el('p', { texte: 'Les relances à faire apparaîtront ici en tête avec le lot suivant du pont.' }));
+}
+function rappelAction(action, id) {
+  api('POST', { action: action, rappel_id: id }).then(function () { return etat.ouvert ? ouvrir(etat.ouvert) : null; }).then(charger).catch(alerte);
+}
+$('recherche').addEventListener('input', function () { dessiner(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerVolet(); });
+
+/* ---------- Repli en liste ---------- */
+function dessinerRepli(lots) {
+  var r = $('repli'); r.textContent = '';
+  if (!lots.length) r.appendChild(el('p', { classe: 'sous', texte: 'Aucun dossier ouvert.' }));
+  lots.forEach(function (lot) {
+    r.appendChild(el('h2', {}, [el('i', { style: 'background:' + lot.type.couleur }), lot.type.nom + ' (' + lot.tous.length + ')']));
+    lot.tous.forEach(function (d) {
+      var x = T.delais(d, etat.aujourdhui);
+      r.appendChild(el('a', { style: 'border-left-color:' + teinteDe(d, x), onclick: function () { ouvrir(d.id); } }, [
+        el('b', { texte: d.intitule }), el('span', { texte: d.nom_outlook + ' — ' + avancement(d).texte })
+      ]));
+    });
+  });
+}
+
+/* ---------- Volet du dossier ---------- */
+function fermerVolet() { $('volet').classList.add('cache'); $('voile').classList.add('cache'); etat.ouvert = null; }
+$('voile').addEventListener('click', fermerVolet);
+function enteteVolet(titre) {
+  var v = $('volet'); v.textContent = '';
+  v.appendChild(el('button', { classe: 'fermer', 'aria-label': 'Fermer', texte: '×', onclick: fermerVolet }));
+  v.appendChild(el('h2', { texte: titre }));
+  $('voile').classList.remove('cache'); v.classList.remove('cache');
+  return v;
+}
+
+function ouvrir(id) {
+  return api('GET', { action: 'dossier', id: id }).then(function (j) {
+    etat.ouvert = id;
+    var d = j.dossier, v = enteteVolet(d.intitule);
+    v.appendChild(el('div', { classe: 'sous', texte: 'Dossier Outlook : ' + d.nom_outlook }));
+    var courante = d.etape === 'formalites' ? 'signe' : d.etape;
+    var et = el('div', { classe: 'etapes', role: 'group', 'aria-label': 'Étape' });
+    ['en_cours', 'avant_contrat', 'signe', 'abandonne', 'clos'].forEach(function (k) {
+      var b = el('button', { classe: k === courante ? 'actuelle' : '', texte: (k === 'clos' && d.etape === 'clos' ? 'Clos' : LIBELLES[k]) + (k === 'signe' && d.signature_le ? ' le ' + fr(d.signature_le) : '') });
+      if (d.etape === 'abandonne' || k === courante || (d.etape === 'clos' && (k === 'signe' || k === 'abandonne'))) b.disabled = true;
+      else b.addEventListener('click', function () { changerEtape(d, k); });
+      et.appendChild(b);
+    });
+    v.appendChild(et);
+    if (d.etape === 'abandonne') v.appendChild(el('p', { classe: 'sous', texte: 'Abandonné : ' + (d.motif_abandon || '') + '. Si l’opération repart, créez un nouveau dossier.' }));
+    else if (d.etape === 'clos') v.appendChild(el('p', { classe: 'sous', texte: 'Clos le ' + fr(d.classe_le) + ' — ' + (d.motif_cloture || '') + '. Pour le rouvrir, choisissez « En cours » ou « Avant-contrat ».' }));
+    else if (d.signature_le) v.appendChild(el('p', { classe: 'sous', texte: 'Classement dans « signés » le ' + fr(d.classe_le) + '.' }));
+
+    v.appendChild(el('p', { classe: 'sous', style: 'color:' + T.type(d.type_dossier).couleur, texte: T.matiere(T.type(d.type_dossier).matiere).nom + ' · ' + T.type(d.type_dossier).nom + ' — ' + avancement(d).texte }));
+    if (d.etape !== 'abandonne' && d.etape !== 'clos' && !d.signature_le) {
+      if (T.sablier(d, etat.aujourdhui) || d.date_limite) v.appendChild(el('div', { classe: 'ligne' }, [el('button', { classe: 'bouton petit', texte: 'Réajuster la date limite', onclick: function () { reporterDelai(d); } })]));
+      v.appendChild(blocEcheances(d, j.echeances || []));
     }
-    E("eVeille").textContent = "Veille en cours… ("+Math.round((Date.now()-depart)/1000)+" s)";
-    setTimeout(attendre, 15000);
+
+    var ouverts = j.rappels.filter(function (r) { return !r.fait_le; });
+    var champR = el('input', { type: 'text', maxlength: '500', placeholder: 'Nouveau rappel', 'aria-label': 'Texte du rappel' });
+    function poser(delai) { if (!champR.value.trim()) return champR.focus(); api('POST', { action: 'rappel', id: d.id, texte: champR.value, delai: delai }).then(function () { return ouvrir(d.id); }).then(charger).catch(alerte); }
+    var ulR = el('ul', { classe: 'chrono rappels' });
+    ouverts.forEach(function (r) {
+      ulR.appendChild(el('li', {}, [
+        el('span', { classe: r.echeance <= etat.aujourdhui ? 'echu' : '', texte: fr(r.echeance) + ' — ' + r.texte }),
+        el('span', { classe: 'petits' }, [
+          el('button', { classe: 'bouton petit', texte: 'Fait', onclick: function () { rappelAction('rappel_fait', r.id); } }),
+          el('button', { classe: 'bouton petit', texte: 'Reporter', onclick: function () { rappelAction('rappel_reporter', r.id); } })
+        ])
+      ]));
+    });
+    v.appendChild(el('section', { classe: 'bloc' }, [
+      el('h3', { texte: 'Rappels' }),
+      ouverts.length ? ulR : el('p', { classe: 'sous', texte: 'Aucun rappel en cours.' }),
+      el('div', { classe: 'ligne' }, [champR]),
+      el('div', { classe: 'ligne' }, [
+        el('button', { classe: 'bouton petit', texte: 'Dans 3 jours ouvrés', onclick: function () { poser(3); } }),
+        el('button', { classe: 'bouton petit', texte: 'Dans 7 jours ouvrés', onclick: function () { poser(7); } })
+      ])
+    ]));
+
+    var blocDepot = el('section', { classe: 'bloc bloc-depot' }, [
+      el('h3', { texte: 'Déposer un mail' }),
+      zoneDepot('Déposez ici un mail Outlook concernant ce dossier', function (p) { montrerDepot(p); })
+    ]);
+    v.appendChild(blocDepot);
+
+    var note = el('textarea', { maxlength: '2000', placeholder: 'Note : appel, rendez-vous…', 'aria-label': 'Note' });
+    var ulC = el('ul', { classe: 'chrono' });
+    j.evenements.forEach(function (e) { ulC.appendChild(el('li', {}, [el('span', { classe: 'd', texte: fr(e.date_evt) }), el('span', { classe: e.nature, texte: e.texte })])); });
+    v.appendChild(el('section', { classe: 'bloc' }, [
+      el('h3', { texte: 'Chronologie' }),
+      el('div', { classe: 'ligne' }, [note]),
+      el('div', { classe: 'ligne' }, [el('button', { classe: 'bouton fort petit', texte: 'Ajouter la note', onclick: function () {
+        if (!note.value.trim()) return note.focus();
+        api('POST', { action: 'note', id: d.id, texte: note.value }).then(function () { return ouvrir(d.id); }).then(charger).catch(alerte);
+      } })]),
+      el('p', { classe: 'sous', texte: 'Les mails relevés dans la messagerie s’affichent ici avec leur résumé (jamais leur texte).' }),
+      ulC
+    ]));
+
+    var bloc = el('section', { classe: 'bloc' }, [el('h3', { texte: 'Fiche' })]);
+    bloc.appendChild(formulaire(d));
+    bloc.appendChild(el('div', { classe: 'ligne' }, [el('button', { classe: 'bouton danger petit', texte: 'Supprimer ce dossier', onclick: function () {
+      if (!window.confirm('Supprimer « ' + d.intitule + ' » de SUIVI ? Les mails restent dans Outlook.')) return;
+      api('POST', { action: 'supprimer', id: d.id }).then(function () { fermerVolet(); etat.choisi = null; return charger(); }).catch(alerte);
+    } })]));
+    v.appendChild(bloc);
+  }).catch(alerte);
+}
+
+/* ---------- Échéances datées tirées de l'acte ---------- */
+function blocEcheances(d, liste) {
+  var ouvertes = liste.filter(function (x) { return !x.faite_le; });
+  var ul = el('ul', { classe: 'chrono rappels' });
+  ouvertes.forEach(function (x) {
+    var passee = x.echeance < etat.aujourdhui, proche = !passee && ecart(etat.aujourdhui, x.echeance) <= 15;
+    ul.appendChild(el('li', {}, [
+      el('span', { classe: passee ? 'rouge-fort' : proche ? 'echu' : '', texte: fr(x.echeance) + ' — ' + x.libelle }),
+      el('span', { classe: 'petits' }, [
+        el('button', { classe: 'bouton petit', texte: 'Acquise', title: 'Condition levée, prêt obtenu…', onclick: function () { echeanceAction('echeance_faite', x.id, d.id); } }),
+        el('button', { classe: 'bouton petit', texte: 'Retirer', onclick: function () { if (window.confirm('Retirer l’échéance « ' + x.libelle + ' » ?')) echeanceAction('echeance_retirer', x.id, d.id); } })
+      ])
+    ]));
+  });
+  var sel = el('select', { 'aria-label': 'Objet de l’échéance' });
+  etat.libellesEcheance.concat(['Autre échéance…']).forEach(function (l) { sel.appendChild(el('option', { value: l, texte: l })); });
+  var libre = el('input', { type: 'text', maxlength: '200', placeholder: 'Précisez l’échéance', classe: 'cache' });
+  sel.addEventListener('change', function () { libre.classList.toggle('cache', sel.value !== 'Autre échéance…'); if (!libre.classList.contains('cache')) libre.focus(); });
+  var jour = el('input', { type: 'date', 'aria-label': 'Date de l’échéance', style: 'max-width:170px' });
+  var err = el('div', { classe: 'erreur' });
+  return el('section', { classe: 'bloc' }, [
+    el('h3', { texte: 'Échéances de l’acte' }),
+    ouvertes.length ? ul : el('p', { classe: 'sous', texte: 'Aucune échéance inscrite (conditions suspensives, prêt, date butoir de réitération…).' }),
+    el('div', { classe: 'ligne' }, [sel]),
+    el('div', { classe: 'ligne' }, [libre]),
+    el('div', { classe: 'ligne' }, [jour, el('button', { classe: 'bouton petit', texte: 'Inscrire l’échéance', onclick: function () {
+      err.textContent = '';
+      var lib = sel.value === 'Autre échéance…' ? libre.value.trim() : sel.value;
+      if (!lib) { err.textContent = 'Précisez l’échéance.'; return libre.focus(); }
+      if (!jour.value) { err.textContent = 'Indiquez la date.'; return jour.focus(); }
+      api('POST', { action: 'echeance', id: d.id, libelle: lib, date: jour.value }).then(function () { return ouvrir(d.id); }).then(charger).catch(function (x) { err.textContent = x.message; });
+    } })]),
+    err,
+    el('p', { classe: 'sous', texte: 'Une échéance à moins de 15 jours ressort dans « À traiter » ; dépassée, le dossier passe en rouge. Elle rejoindra le courriel de 7 h avec la messagerie.' })
+  ]);
+}
+function echeanceAction(action, xid, id) {
+  api('POST', { action: action, echeance_id: xid }).then(function () { return ouvrir(id); }).then(charger).catch(alerte);
+}
+
+/* ---------- Fiche (création et modification) ---------- */
+function formulaire(d, prop) {
+  var nouveau = !d; d = d || {};
+  if (prop) d = { intitule: prop.intitule, partie1: prop.partie1, partie2: prop.partie2, numero: prop.numero, signature_prevue: prop.signature_prevue,
+    adresses: prop.adresses, etude: prop.etude || (prop.collaborateur ? [prop.collaborateur] : []), etude_relances: [], etape: prop.etape,
+    type_dossier: prop.type_dossier, date_ouverture: prop.date_ouverture };
+  var f = el('form', { classe: 'fiche' });
+  function c(nom) { return f.querySelector('[name="' + nom + '"]'); }
+  function champ(lib, nom, type, val, attrs) {
+    var i = el('input', Object.assign({ type: type || 'text', name: nom }, attrs || {})); i.value = val || '';
+    if (prop && val) i.classList.add('prerempli');
+    return el('label', {}, [lib, i]);
+  }
+  f.appendChild(champ('Intitulé', 'intitule', 'text', d.intitule, { required: '', maxlength: '200' }));
+  /* type de dossier, rangé par matière */
+  var typeSel = el('select', { name: 'type_dossier', required: '' }, [el('option', { value: '', texte: '— choisir —' })]);
+  T.MATIERES.forEach(function (m) {
+    var og = el('optgroup', { label: m.nom });
+    T.TYPES.filter(function (t) { return t.matiere === m.id; }).forEach(function (t) {
+      og.appendChild(el('option', { value: t.id, texte: t.nom.replace(/ \(.*\)$/, '') + ' — ' + (t.mois ? t.mois + ' mois après le décès' : t.delai + ' j' + (t.ajustable ? ', ajustable' : '')) }));
+    });
+    typeSel.appendChild(og);
+  });
+  typeSel.value = d.type_dossier || '';
+  if (prop && d.type_dossier) typeSel.classList.add('prerempli');
+  var delaiChamp = champ('Délai moyen pour ce dossier (jours)', 'delai_jours', 'number', d.delai_jours || '', { min: '1', max: '1500', step: '1' });
+  var decesChamp = champ('Date de décès (départ du délai fiscal de 6 mois)', 'date_deces', 'date', d.date_deces);
+  f.appendChild(el('div', { classe: 'deux' }, [
+    el('label', {}, ['Type de dossier', typeSel]),
+    champ('Date d’ouverture', 'date_ouverture', 'date', d.date_ouverture || etat.aujourdhui, { required: '' })
+  ]));
+  if (prop && d.date_ouverture) f.querySelector('[name="date_ouverture"]').classList.add('prerempli');
+  var ligneType = el('div', { classe: 'deux' }, [delaiChamp, decesChamp]);
+  f.appendChild(ligneType);
+  function majType(change) {
+    var t = typeSel.value ? T.type(typeSel.value) : null;
+    delaiChamp.classList.toggle('cache', !(t && t.ajustable));
+    decesChamp.classList.toggle('cache', !(t && t.depuis === 'deces'));
+    var di = c('delai_jours');
+    if (t && t.ajustable && (change || !di.value)) di.value = t.delai;
+    ligneType.classList.toggle('cache', delaiChamp.classList.contains('cache') && decesChamp.classList.contains('cache'));
+  }
+  typeSel.addEventListener('change', function () { majType(true); });
+  f.appendChild(el('div', { classe: 'deux' }, [
+    champ('Vendeur, ou nom unique (succession, société)', 'partie1', 'text', d.partie1, { required: '', maxlength: '120' }),
+    champ('Acquéreur (facultatif)', 'partie2', 'text', d.partie2, { maxlength: '120' })
+  ]));
+  f.appendChild(el('div', { classe: 'deux' }, [
+    champ('Numéro de dossier (facultatif)', 'numero', 'text', d.numero, { maxlength: '40' }),
+    champ('Date de signature prévue', 'signature_prevue', 'date', d.signature_prevue)
+  ]));
+  if (nouveau) {
+    var sel = el('select', { name: 'etape' }, [el('option', { value: 'en_cours', texte: 'En cours' }), el('option', { value: 'avant_contrat', texte: 'Avant-contrat' })]);
+    if (d.etape === 'avant_contrat') { sel.value = 'avant_contrat'; sel.classList.add('prerempli'); }
+    f.appendChild(el('label', {}, ['Étape', sel]));
+  }
+  var adr = el('textarea', { name: 'adresses', placeholder: 'Une adresse par ligne' }); adr.value = (d.adresses || []).join('\n');
+  if (prop && adr.value) adr.classList.add('prerempli');
+  f.appendChild(el('label', {}, ['Adresses des correspondants déjà connues', adr]));
+  /* bloc « Étude » : les adresses du cabinet, une case par collaborateur pour les relances */
+  var etudeL = (d.etude || []).slice(), relancesL = (d.etude_relances || []).slice();
+  var blocEtude = el('div', { classe: 'etude' + (prop && etudeL.length ? ' prerempli' : '') });
+  f.appendChild(el('label', {}, ['Étude — cochez qui reçoit les relances de ce dossier']));
+  f.appendChild(blocEtude);
+  function dessinerEtude() {
+    blocEtude.textContent = '';
+    if (!etudeL.length) blocEtude.appendChild(el('div', { classe: 'etude-vide', texte: 'Aucun collaborateur pour ce dossier.' }));
+    etudeL.forEach(function (a) {
+      var partagee = T.estPartagee(a);
+      var cb = el('input', { type: 'checkbox' }); cb.checked = relancesL.indexOf(a) >= 0;
+      cb.addEventListener('change', function () { if (cb.checked) { if (relancesL.indexOf(a) < 0) relancesL.push(a); } else relancesL = relancesL.filter(function (x) { return x !== a; }); });
+      blocEtude.appendChild(el('div', { classe: 'etude-ligne' }, [
+        el('div', { classe: 'qui' }, [el('b', { texte: nomEtude(a) }), el('span', { texte: a })]),
+        partagee ? el('span', { classe: 'sans', texte: 'adresse partagée, sans relance' }) : el('label', { classe: 'case' }, [cb, 'Relances']),
+        el('button', { type: 'button', classe: 'retirer', title: 'Retirer de ce dossier', 'aria-label': 'Retirer ' + a, texte: '×', onclick: function () {
+          etudeL = etudeL.filter(function (x) { return x !== a; }); relancesL = relancesL.filter(function (x) { return x !== a; }); dessinerEtude();
+        } })
+      ]));
+    });
+    // bouton « + » : tous les collaborateurs du cabinet, par ordre alphabétique du nom de famille
+    var libres = etat.collaborateurs.filter(function (x) { return etudeL.indexOf(x.adresse) < 0; })
+      .sort(function (x, y) { return (x.nom || '').localeCompare(y.nom || '', 'fr', { sensitivity: 'base' }) || (x.prenom || '').localeCompare(y.prenom || '', 'fr'); });
+    var choix = el('select', { 'aria-label': 'Ajouter un collaborateur' }, [el('option', { value: '', texte: libres.length ? '— ajouter un collaborateur —' : 'Liste des collaborateurs à importer (pied de page)' })]
+      .concat(libres.map(function (x) { return el('option', { value: x.adresse, texte: x.nom + (x.prenom ? ' ' + x.prenom : '') + (x.site ? ' — ' + x.site : '') }); })));
+    if (!libres.length) choix.disabled = true;
+    var plus = el('button', { type: 'button', classe: 'bouton petit', texte: '+', title: 'Ajouter ce collaborateur', onclick: function () {
+      if (!choix.value) return choix.focus();
+      etudeL.push(choix.value); dessinerEtude();
+    } });
+    blocEtude.appendChild(el('div', { classe: 'etude-ajout' }, [choix, plus]));
+  }
+  dessinerEtude();
+  /* une adresse de l'étude tapée parmi les correspondants passe dans le bloc « Étude » */
+  adr.addEventListener('change', function () {
+    var lignes = adr.value.split(/[\s,;]+/).filter(Boolean), reste = [];
+    lignes.forEach(function (a) { a = a.toLowerCase(); if (T.estEtude(a)) { if (etudeL.indexOf(a) < 0) etudeL.push(a); } else if (a !== T.MOI) reste.push(a); });
+    if (reste.length !== lignes.length) { adr.value = reste.join('\n'); dessinerEtude(); }
+  });
+  var apercu = el('div', { classe: 'apercu' });
+  function majApercu() {
+    var p1 = c('partie1').value.trim().toUpperCase(), p2 = c('partie2').value.trim().toUpperCase(), n = c('numero').value.trim();
+    apercu.textContent = 'Dossier Outlook : ' + ([n, p2 ? p1 + ' / ' + p2 : p1].filter(Boolean).join(' ') || '—');
+  }
+  f.addEventListener('input', majApercu); majApercu(); f.appendChild(apercu); majType(false);
+  var err = el('div', { classe: 'erreur' }); f.appendChild(err);
+  f.appendChild(el('div', { classe: 'ligne' }, [el('button', { classe: 'bouton fort', type: 'submit', texte: nouveau ? 'Créer le dossier' : 'Enregistrer la fiche' })]));
+  f.addEventListener('submit', function (e) {
+    e.preventDefault(); err.textContent = '';
+    var donnees = { action: nouveau ? 'creer' : 'modifier', id: d.id, intitule: c('intitule').value, partie1: c('partie1').value, partie2: c('partie2').value,
+      numero: c('numero').value, signature_prevue: c('signature_prevue').value || null, adresses: c('adresses').value,
+      etude: etudeL, relances: relancesL,
+      type_dossier: c('type_dossier').value, date_ouverture: c('date_ouverture').value, date_deces: c('date_deces').value || null, delai_jours: c('delai_jours').value || null };
+    if (nouveau) donnees.etape = c('etape').value;
+    if (prop && !prop.mail_outlook) donnees.mail = prop.mail;
+    if (prop && prop.mail_outlook) donnees.mail_outlook = prop.mail_outlook;   /* mail relevé : rattaché, pas de seconde ligne */
+    api('POST', donnees).then(function (j) { return charger().then(function () { return ouvrir(j.dossier.id); }); }).catch(function (x) { err.textContent = x.message; });
+  });
+  return f;
+}
+$('nouveau').addEventListener('click', function () { nouveauDossier(null); });
+
+/* ---------- Mail glissé : lecture sur le poste et préremplissage ---------- */
+var chargementMsg = null;
+function lecteurMsg() {
+  if (window.MsgReader) return Promise.resolve();
+  if (!chargementMsg) chargementMsg = new Promise(function (ok, ko) {
+    var s = document.createElement('script'); s.src = '/vendor/msgreader.js'; s.onload = ok; s.onerror = function () { ko(new Error('Lecteur des fichiers .msg indisponible.')); };
+    document.head.appendChild(s);
+  });
+  return chargementMsg;
+}
+function lireMail(fichier) {
+  if (!fichier) return Promise.reject(new Error('Aucun fichier.'));
+  if (!/\.(msg|eml)$/i.test(fichier.name) && fichier.type !== 'message/rfc822') return Promise.reject(new Error('Glissez un mail Outlook (fichier .msg ou .eml).'));
+  return fichier.arrayBuffer().then(function (buf) {
+    var oct = new Uint8Array(buf);
+    var msg = /\.msg$/i.test(fichier.name) || (oct[0] === 0xD0 && oct[1] === 0xCF);
+    return (msg ? lecteurMsg() : Promise.resolve()).then(function () {
+      return SuiviLecture.proposer(SuiviLecture.lireOctets(fichier.name, oct), etat.aujourdhui);
+    });
+  });
+}
+function fichierDe(e) {
+  var dt = e.dataTransfer; if (!dt) return null;
+  if (dt.files && dt.files.length) return dt.files[0];
+  return null;
+}
+/* dossiers qui semblent concernés : une adresse déjà connue, ou les noms des parties dans l'objet */
+function candidats(prop) {
+  var objet = sansAccent(prop.mail.objet);
+  var adr = prop.adresses.concat(prop.etude || []);
+  return etat.dossiers.filter(actif).map(function (d) {
+    var score = 0;
+    (d.adresses || []).forEach(function (a) { if (adr.indexOf(a) >= 0) score += 1; });
+    [d.partie1, d.partie2].forEach(function (n) { n = sansAccent(n || '').trim(); if (n.length > 2 && objet.indexOf(n) >= 0) score += 2; });
+    if (d.numero && objet.indexOf(sansAccent(d.numero)) >= 0) score += 3;
+    return { d: d, score: score };
+  }).filter(function (x) { return x.score > 0; }).sort(function (a, b) { return b.score - a.score; }).slice(0, 4);
+}
+function traiterMailGlisse(fichier) {
+  return lireMail(fichier).then(function (prop) {
+    var c = candidats(prop);
+    if (!c.length) return nouveauDossier(prop);
+    var v = enteteVolet('Mail déposé');
+    v.appendChild(resumeMail(prop));
+    v.appendChild(el('p', { classe: 'sous', texte: c.length > 1 ? 'Ce mail semble concerner l’un de ces dossiers :' : 'Ce mail semble concerner ce dossier :' }));
+    c.forEach(function (x) {
+      v.appendChild(el('div', { classe: 'ligne' }, [el('button', { classe: 'bouton fort', texte: 'Le déposer dans « ' + x.d.intitule + ' »', onclick: function () {
+        ouvrir(x.d.id).then(function () { montrerDepot(prop); });
+      } })]));
+    });
+    v.appendChild(el('div', { classe: 'ligne' }, [el('button', { classe: 'bouton', texte: 'Créer un nouveau dossier à partir de ce mail', onclick: function () { nouveauDossier(prop); } })]));
+  }).catch(alerte);
+}
+function resumeMail(prop) {
+  return el('div', { classe: 'lu' }, [
+    el('b', { texte: prop.mail.objet || '(sans objet)' }),
+    el('span', { texte: (prop.mail.expediteur || 'Expéditeur inconnu') + ' — ' + fr(prop.mail.date) }),
+    prop.mail.apercu ? el('div', { classe: 'apercu-mail', texte: prop.mail.apercu.slice(0, 220) + (prop.mail.apercu.length > 220 ? '…' : '') }) : null
+  ]);
+}
+/* une zone où glisser un mail, ou cliquer pour le choisir */
+function zoneDepot(texteZone, quandLu) {
+  var z = el('div', { classe: 'depot', role: 'region', 'aria-label': 'Zone de dépôt d’un mail' }, [
+    el('div', { classe: 'depot-titre', texte: texteZone }),
+    el('div', { classe: 'depot-aide', texte: 'Faites glisser le mail depuis Outlook et lâchez-le ici.' })
+  ]);
+  z.addEventListener('dragover', function (e) { e.preventDefault(); e.stopPropagation(); z.classList.add('survol'); });
+  z.addEventListener('dragleave', function () { z.classList.remove('survol'); });
+  z.addEventListener('drop', function (e) { e.preventDefault(); e.stopPropagation(); z.classList.remove('survol'); cacherRideau(); var f = fichierDe(e); if (f) lireMail(f).then(quandLu).catch(alerte); });
+  return z;
+}
+/* dans un dossier ouvert : inscrire le mail, apprendre ses adresses, poser un rappel */
+function montrerDepot(prop) {
+  var cible = $('volet').querySelector('.bloc-depot'); if (!cible) return;
+  var id = etat.ouvert;
+  cible.textContent = '';
+  cible.appendChild(el('h3', { texte: 'Mail déposé' }));
+  cible.appendChild(resumeMail(prop));
+  var champ = el('input', { type: 'text', maxlength: '500', placeholder: 'Rappel à poser (facultatif)', 'aria-label': 'Texte du rappel' });
+  function envoyer(delai) {
+    if (delai && !champ.value.trim()) return champ.focus();
+    api('POST', { action: 'deposer', id: id, mail: prop.mail, adresses: prop.adresses.concat(prop.etude || []), rappel: delai ? champ.value : '', delai: delai || 0 })
+      .then(function () { return ouvrir(id); }).then(charger).catch(alerte);
+  }
+  cible.appendChild(el('div', { classe: 'ligne' }, [champ]));
+  cible.appendChild(el('div', { classe: 'ligne' }, [
+    el('button', { classe: 'bouton fort petit', texte: 'Inscrire sans rappel', onclick: function () { envoyer(0); } }),
+    el('button', { classe: 'bouton petit', texte: 'Avec rappel dans 3 jours ouvrés', onclick: function () { envoyer(3); } }),
+    el('button', { classe: 'bouton petit', texte: 'Dans 7 jours ouvrés', onclick: function () { envoyer(7); } })
+  ]));
+  cible.appendChild(el('p', { classe: 'sous', texte: 'Le texte du mail n’est pas conservé : SUIVI garde l’objet, l’expéditeur, la date et les adresses. Le rangement dans le dossier Outlook se fera dès que la messagerie sera branchée.' }));
+  cible.scrollIntoView({ block: 'nearest' });
+}
+function nouveauDossier(prop) {
+  etat.ouvert = null;
+  var v = enteteVolet('Nouveau dossier');
+  v.appendChild(zoneDepot(prop ? 'Glissez un autre mail pour recommencer' : 'Déposez ici un mail Outlook pour préremplir la fiche', function (p) { nouveauDossier(p); }));
+  if (prop) {
+    v.appendChild(resumeMail(prop));
+    v.appendChild(el('p', { classe: 'sous', texte: 'Fiche préremplie à partir de ce mail : vérifiez les champs marqués d’un filet bleu.' }));
+  }
+  v.appendChild(formulaire(null, prop));
+  v.querySelector('input[name="intitule"]').focus();
+}
+
+/* glisser un mail n'importe où sur la page */
+var profondeur = 0;
+function cacherRideau() { profondeur = 0; $('rideau').classList.add('cache'); }
+function porteFichier(e) { var t = e.dataTransfer && e.dataTransfer.types; return t && Array.prototype.indexOf.call(t, 'Files') >= 0; }
+document.addEventListener('dragenter', function (e) { if ($('appli').classList.contains('cache') || !porteFichier(e)) return; profondeur++; if (!$('volet').querySelector('.depot')) $('rideau').classList.remove('cache'); });
+document.addEventListener('dragleave', function () { if (--profondeur <= 0) cacherRideau(); });
+document.addEventListener('dragover', function (e) { if (porteFichier(e)) e.preventDefault(); });
+document.addEventListener('drop', function (e) {
+  if (!porteFichier(e)) return;
+  e.preventDefault(); cacherRideau();
+  if ($('appli').classList.contains('cache')) return;
+  var f = fichierDe(e); if (!f) return;
+  var voletOuvert = !$('volet').classList.contains('cache');
+  if (etat.ouvert && voletOuvert) lireMail(f).then(montrerDepot).catch(alerte);
+  else if (voletOuvert && $('volet').querySelector('form.fiche')) lireMail(f).then(nouveauDossier).catch(alerte);
+  else traiterMailGlisse(f);
+});
+
+/* ---------- Signés et abandonnés ---------- */
+$('voir-classes').addEventListener('click', function () {
+  var classes = etat.dossiers.filter(function (d) { return !actif(d); }).sort(function (a, b) { return b.classe_le.localeCompare(a.classe_le); });
+  var v = enteteVolet('Signés, abandonnés et clos');
+  v.appendChild(el('p', { classe: 'sous', texte: 'Chaque fiche est retirée de SUIVI deux ans après son classement. Les mails restent dans Outlook.' }));
+  v.appendChild(bilanMois(classes));
+  if (!classes.length) { v.appendChild(el('p', { texte: 'Aucun dossier classé.' })); return; }
+  var tb = el('tbody');
+  classes.forEach(function (d) {
+    var retrait = (+d.classe_le.slice(0, 4) + 2) + d.classe_le.slice(4);
+    tb.appendChild(el('tr', { classe: 'l', onclick: function () { ouvrir(d.id); } }, [
+      el('td', { texte: d.intitule }),
+      el('td', { texte: d.etape === 'abandonne' ? 'Abandonné — ' + (d.motif_abandon || '') : d.etape === 'clos' ? 'Clos — ' + (d.motif_cloture || '') : 'Signé le ' + fr(d.signature_le) }),
+      el('td', { texte: fr(d.classe_le) }), el('td', { texte: fr(retrait) })
+    ]));
+  });
+  v.appendChild(el('table', { classe: 'classes' }, [el('thead', {}, [el('tr', {}, [el('th', { texte: 'Dossier' }), el('th', { texte: 'État' }), el('th', { texte: 'Classé le' }), el('th', { texte: 'Retiré le' })])]), tb]));
+});
+
+/* ---------- Changement d'étape : date obligatoire, motif pour l'abandon ---------- */
+function changerEtape(d, cible) {
+  var dlg = $('dlg-etape');
+  var clore = cible === 'clos', avecMotif = cible === 'abandonne' || clore;
+  $('dlg-titre').textContent = cible === 'signe' ? 'Acte signé — « ' + d.intitule + ' »' : cible === 'abandonne' ? 'Abandon — « ' + d.intitule + ' »' : clore ? 'Clôture — « ' + d.intitule + ' »' : (d.etape === 'clos' ? 'Réouverture, étape « ' : 'Étape « ') + LIBELLES[cible] + ' »';
+  $('dlg-date').value = etat.aujourdhui; $('dlg-erreur').textContent = '';
+  $('dlg-motif-bloc').classList.toggle('cache', !avecMotif);
+  var s = $('dlg-motif'); s.textContent = '';
+  (clore ? etat.motifsCloture.concat(['Autre']) : etat.motifs.concat(['Autre motif'])).forEach(function (m) { s.appendChild(el('option', { value: m, texte: m })); });
+  var autre = clore ? 'Autre' : 'Autre motif';
+  $('dlg-libre-bloc').firstChild.textContent = clore ? 'Précisez le contexte' : 'Précisez le motif';
+  $('dlg-libre').value = ''; $('dlg-libre-bloc').classList.add('cache');
+  s.onchange = function () { $('dlg-libre-bloc').classList.toggle('cache', s.value !== autre); };
+  dlg.onclose = function () {
+    if (dlg.returnValue !== 'valider') return;
+    var motif = s.value === autre ? (clore ? 'Autre : ' : '') + $('dlg-libre').value.trim() : s.value;
+    api('POST', { action: 'etape', id: d.id, etape: cible, date: $('dlg-date').value, motif: avecMotif ? motif : undefined })
+      .then(charger).then(function () { return ouvrir(d.id); }).catch(alerte);
   };
-  setTimeout(attendre, 20000);
-}
-E("btnVeille").onclick = () => lancerVeille(true);
-
-/* ---------- Chantiers : les fichiers POINTS-<outil>.md lus sur le Drive ----------
-   Même convention que CARTO : une ligne « - [ ] » par point à faire. On compte
-   les points restants par outil et on renvoie vers CARTO pour le détail. */
-const OUTILS_NOMS = {
-  "fidal-apps":"FIDAL Apps", marteau:"MARTEAU", fusion:"FUSION", countdown:"COUNTDOWN", redpar:"REDPAR", urba:"URBA",
-  xylo:"XYLO", trente:"TRENTE", matrice:"MATRICE", certif:"CERTIF", risques:"RISQUES", paint:"PAINT", plume:"PLUME",
-  "depot-capital":"DÉPÔT DE CAPITAL", apostille:"APOSTILLE", "delais-immo":"DÉLAIS-IMMO", "pret-particulier":"PRÊT PARTICULIER",
-  "pret-pro":"PRÊT PRO", prix:"PRIX", attente:"ATTENTE", radio:"RADIO", presse:"PRESSE", partage:"PARTAGE AMIABLE",
-  consult:"CONSULT", "plateforme-avocats":"PLATEFORME AVOCATS"
-};
-const CARTO = "https://carto-six.vercel.app/";
-async function chargerChantiers(jeton){
-  voyant("vChantiers","attente"); E("eChantiers").textContent = "Lecture des fichiers de points…";
-  try{
-    const u = new URL("https://www.googleapis.com/drive/v3/files");
-    u.searchParams.set("q","name contains 'POINTS-' and trashed = false");
-    u.searchParams.set("fields","files(id,name,modifiedTime)");
-    u.searchParams.set("pageSize","200");
-    u.searchParams.set("corpora","allDrives"); u.searchParams.set("supportsAllDrives","true"); u.searchParams.set("includeItemsFromAllDrives","true");
-    const r = await fetch(u,{headers:{Authorization:"Bearer "+jeton}});
-    if(!r.ok) throw new Error("Drive "+r.status);
-    const fichiers = ((await r.json()).files||[]).filter(f=>/^POINTS-[a-z0-9-]+\.md$/i.test(f.name));
-    const parOutil = {};
-    fichiers.forEach(f=>{ const id=f.name.replace(/^POINTS-/i,"").replace(/\.md$/i,"").toLowerCase(); if(!parOutil[id]||f.modifiedTime>parOutil[id].modifiedTime) parOutil[id]=f; });
-    const lignes = await Promise.all(Object.entries(parOutil).map(async ([id,f])=>{
-      try{
-        const t = await (await fetch("https://www.googleapis.com/drive/v3/files/"+f.id+"?alt=media",{headers:{Authorization:"Bearer "+jeton}})).text();
-        const reste = (t.match(/^\s*[-*]\s*\[ \]\s*\S/gm)||[]).length;
-        const faits = (t.match(/^\s*[-*]\s*\[[xX]\]\s*\S/gm)||[]).length;
-        return {id, nom:OUTILS_NOMS[id]||id.toUpperCase(), reste, faits};
-      }catch(e){ return null; }
-    }));
-    const ok = lignes.filter(Boolean).sort((a,b)=>b.reste-a.reste || a.nom.localeCompare(b.nom,"fr"));
-    const total = ok.reduce((n,l)=>n+l.reste,0);
-    E("lChantiers").innerHTML = ok.map(l=>`<a class="chantier ${l.reste?"":"termine"}" href="${CARTO}" target="_blank" rel="noopener" title="${l.faits} point(s) réalisé(s)"><b>${l.nom}</b><span class="n ${l.reste?"":"zero"}">${l.reste}</span></a>`).join("");
-    voyant("vChantiers", total ? "ok" : "ok");
-    E("eChantiers").textContent = ok.length ? `${total} point${total>1?"s":""} restant${total>1?"s":""} sur ${ok.length} outils — le détail est dans CARTO.` : "Aucun fichier de points trouvé sur le Drive.";
-    E("sChantiers").textContent = "lus à "+heure(Date.now());
-    noter("Chantiers : "+ok.length+" fichiers de points, "+total+" points restants.");
-  }catch(e){
-    voyant("vChantiers","ko"); E("eChantiers").textContent = "Lecture impossible ("+e.message+")."; noter("Chantiers : "+e.message);
-  }
+  $('dlg-valider').onclick = function (e) {
+    if (!$('dlg-date').value) { e.preventDefault(); $('dlg-erreur').textContent = 'La date est obligatoire.'; }
+    else if (avecMotif && s.value === autre && !$('dlg-libre').value.trim()) { e.preventDefault(); $('dlg-erreur').textContent = clore ? 'Précisez le contexte.' : 'Précisez le motif.'; }
+  };
+  dlg.showModal();
 }
 
-/* ---------- Services et sources : la fonction serveur /api/sante les interroge (3.0, 18/10/2026) ----------
-   La page ne peut pas lire les réponses des autres applications (origines croisées) ; la fonction, côté serveur, le fait et rend le détail :
-   code et durée de chaque service, état publié par MONETA, réponse des sources publiques. Les services injoignables sont rappelés une fois.
-   Si la fonction ne répond pas, repli sur l'ancien appel direct, en deux essais de vingt secondes (un réveil lent n'est pas une panne). */
-const SERVICES = [
-  ["FIDAL Apps","https://fidal-apps.vercel.app/"],["CARTO","https://carto-six.vercel.app/"],["MARTEAU","https://marteau-rho.vercel.app/"],["FUSION","https://fusion-three-kappa.vercel.app/"],
-  ["COUNTDOWN","https://countdown-kappa-azure.vercel.app/"],["REDPAR","https://redpar-frontend.vercel.app/"],["URBA","https://urba-lemon.vercel.app/"],
-  ["XYLO","https://xylo-phi.vercel.app/"],["TRENTE","https://trente.vercel.app/"],["MATRICE","https://matrice-black.vercel.app/"],
-  ["CERTIF","https://certif-bay.vercel.app/"],["RISQUES","https://risques.vercel.app/"],["PAINT","https://paint-blue.vercel.app/"],
-  ["PLUME","https://plume-mocha.vercel.app/"],["PRÊT PART.","https://pret-particulier.vercel.app/"],["PRÊT PRO","https://pret-pro.vercel.app/"],
-  ["PRIX","https://prix-mu.vercel.app/"],["ATTENTE","https://attente.vercel.app/"],["PARTAGE","https://partage-amiable.vercel.app/"],["CONSULT","https://consult-sand.vercel.app/"],
-  ["HISTO","https://histo-sand.vercel.app/"],["MONETA","https://moneta-navy.vercel.app/"],["COPRO","https://copro-sigma.vercel.app/"],
-  ["COFFEE","https://coffee-taupe-gamma.vercel.app/"],["PHARE","https://phare-ashy.vercel.app/"],["TAXVÉRIF-PARTICULIER","https://taxverif-particulier.vercel.app/"],["SUIVI","https://suivi-pi-orcin.vercel.app/"]
-];
-const LIBELLE_ETAT = { ok:"répond", lent:"répond lentement", protege:"joignable (protégé)", attention:"à voir", degrade:"dégradé", ko:"injoignable" };
-const UTILISE_PAR = { "Adresse (BAN)":"RISQUES", "Cadastre (API Carto IGN)":"RISQUES", "Géoportail (WMS)":"RISQUES", "Géorisques (API)":"RISQUES", "BRGM (WMS Géorisques)":"RISQUES", "API Claude":"MONETA, FUSION, TRENTE" };
-const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const pluriel = (n, un, plusieurs) => n+" "+(n>1 ? plusieurs : un);
-const gravite = e => e==="ko" ? 3 : (e==="degrade"||e==="attention"||e==="lent") ? 2 : 0;
+/* ---------- Collaborateurs du cabinet : import du fichier Excel (rien ne passe par GitHub) ---------- */
+var chargementXlsx = null;
+function lecteurXlsx() {
+  if (window.XLSX) return Promise.resolve();
+  if (!chargementXlsx) chargementXlsx = new Promise(function (ok, ko) {
+    var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload = ok; sc.onerror = function () { chargementXlsx = null; ko(new Error('Lecteur Excel indisponible : réessayez.')); };
+    document.head.appendChild(sc);
+  });
+  return chargementXlsx;
+}
+/* lit la feuille « Collaborateurs » (ou la première) : colonnes nom, prénom, mail, site */
+function lireCollaborateurs(buf) {
+  var wb = XLSX.read(buf, { type: 'array' });
+  var nomF = wb.SheetNames.filter(function (n) { return sansAccent(n) === 'collaborateurs'; })[0] || wb.SheetNames[0];
+  var lignes = XLSX.utils.sheet_to_json(wb.Sheets[nomF], { header: 1, defval: '' });
+  var t = -1, col = {};
+  for (var i = 0; i < Math.min(lignes.length, 10) && t < 0; i++) {
+    var l = lignes[i].map(function (x) { return sansAccent(String(x)).trim(); });
+    if (l.indexOf('nom') >= 0 && (l.indexOf('mail') >= 0 || l.indexOf('email') >= 0 || l.indexOf('adresse mail') >= 0)) {
+      t = i; l.forEach(function (x, k) { if (!(x in col)) col[x] = k; });
+    }
+  }
+  if (t < 0) throw new Error('Colonnes « nom » et « mail » introuvables dans le fichier.');
+  var cMail = col.mail !== undefined ? col.mail : col.email !== undefined ? col.email : col['adresse mail'];
+  return lignes.slice(t + 1).map(function (l) {
+    return { nom: String(l[col.nom] || '').trim(), prenom: String(l[col.prenom] || '').trim(), adresse: String(l[cMail] || '').trim().toLowerCase(), site: String(col.site !== undefined ? l[col.site] : '').trim() };
+  }).filter(function (x) { return x.nom && /@fidal\.notaires\.fr$/.test(x.adresse); });
+}
+function voletCollaborateurs() {
+  var v = enteteVolet('Collaborateurs du cabinet');
+  v.appendChild(el('p', { classe: 'sous', texte: 'Cette liste alimente le bouton « + » du bloc « Étude ». Elle est enregistrée dans la base de SUIVI, jamais dans GitHub. Les adresses partagées (comptabilité, formalités, accueil, listes) restent sans relance.' }));
+  var resultat = el('div', { classe: 'sous' });
+  function importer(fichier) {
+    resultat.textContent = 'Lecture du fichier…';
+    Promise.all([lecteurXlsx(), fichier.arrayBuffer()]).then(function (r) {
+      var liste = lireCollaborateurs(new Uint8Array(r[1]));
+      if (!window.confirm('Remplacer la liste actuelle par les ' + liste.length + ' collaborateurs lus dans « ' + fichier.name + ' » ?')) { resultat.textContent = ''; return; }
+      return api('POST', { action: 'importer_collaborateurs', liste: liste }).then(function (j) {
+        return chargerCollaborateurs().then(function () { voletCollaborateurs(); $('volet').querySelector('.resultat-import').textContent = j.importes + ' collaborateurs importés.'; });
+      });
+    }).catch(function (e) { resultat.textContent = e.message; });
+  }
+  var entree = el('input', { type: 'file', accept: '.xlsx,.xls', classe: 'cache' });
+  entree.addEventListener('change', function () { if (entree.files[0]) importer(entree.files[0]); entree.value = ''; });
+  var zone = el('div', { classe: 'depot' }, [el('div', { classe: 'depot-titre', texte: 'Déposez ici Liste_collaborateurs.xlsx' }),
+    el('div', { classe: 'depot-aide' }, ['ou ', el('button', { type: 'button', classe: 'lien', texte: 'choisissez le fichier', onclick: function () { entree.click(); } }), ' — il remplace la liste actuelle.'])]);
+  zone.addEventListener('dragover', function (e) { e.preventDefault(); e.stopPropagation(); zone.classList.add('survol'); });
+  zone.addEventListener('dragleave', function () { zone.classList.remove('survol'); });
+  zone.addEventListener('drop', function (e) { e.preventDefault(); e.stopPropagation(); zone.classList.remove('survol'); cacherRideau(); var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) importer(f); });
+  resultat.classList.add('resultat-import');
+  v.appendChild(zone); v.appendChild(entree); v.appendChild(resultat);
+  var tb = el('tbody');
+  etat.collaborateurs.slice().sort(function (a, b) { return a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' }); }).forEach(function (x) {
+    tb.appendChild(el('tr', {}, [el('td', { texte: x.nom }), el('td', { texte: x.prenom || '' }), el('td', { texte: x.site || '' }),
+      el('td', { texte: x.adresse + (T.estPartagee(x.adresse) ? ' (partagée)' : '') })]));
+  });
+  if (etat.collaborateurs.length) v.appendChild(el('table', { classe: 'classes' }, [el('thead', {}, [el('tr', {}, [el('th', { texte: 'Nom' }), el('th', { texte: 'Prénom' }), el('th', { texte: 'Site' }), el('th', { texte: 'Adresse' })])]), tb]));
+  else v.appendChild(el('p', { texte: 'Aucun collaborateur importé pour l’instant.' }));
+}
+$('voir-collaborateurs').addEventListener('click', voletCollaborateurs);
 
-async function appelSante(noms){
-  const ctl = new AbortController(), t = setTimeout(()=>ctl.abort(), 30000);
-  try{
-    const r = await fetch("/api/sante"+(noms ? "?reprise=1&services="+encodeURIComponent(noms.join(",")) : ""), {cache:"no-store", signal:ctl.signal});
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const j = await r.json(); if(!Array.isArray(j.services)) throw new Error("réponse inattendue");
-    return j;
-  } finally { clearTimeout(t); }
+/* ---------- Sablier : réajuster la date limite, motif obligatoire ---------- */
+function reporterDelai(d) {
+  var dlg = $('dlg-delai'), x = T.delais(d, etat.aujourdhui);
+  $('dlg-delai-titre').textContent = 'Réajuster la date limite — « ' + d.intitule + ' »';
+  $('dlg-delai-actuelle').textContent = 'Date limite actuelle : ' + fr(x.fin) + (x.reste < 0 ? ' (dépassée de ' + (-x.reste) + ' jour' + (x.reste < -1 ? 's' : '') + ')' : '') + (x.reportee ? ', déjà réajustée' : '');
+  var champ = $('dlg-delai-date'); champ.min = etat.aujourdhui;
+  champ.value = x.fin >= etat.aujourdhui ? C.decaler(x.fin, 15) : C.decaler(etat.aujourdhui, 15);
+  $('dlg-delai-motif').value = ''; $('dlg-delai-erreur').textContent = '';
+  dlg.onclose = function () {
+    if (dlg.returnValue !== 'valider') return;
+    api('POST', { action: 'delai_reporter', id: d.id, date: champ.value, motif: $('dlg-delai-motif').value })
+      .then(charger).then(function () { if (etat.ouvert === d.id) return ouvrir(d.id); }).catch(alerte);
+  };
+  $('dlg-delai-valider').onclick = function (e) {
+    if (!champ.value) { e.preventDefault(); $('dlg-delai-erreur').textContent = 'Indiquez la nouvelle date limite.'; }
+    else if (champ.value < etat.aujourdhui) { e.preventDefault(); $('dlg-delai-erreur').textContent = 'La nouvelle date ne peut pas être passée.'; }
+    else if (!$('dlg-delai-motif').value.trim()) { e.preventDefault(); $('dlg-delai-erreur').textContent = 'Le motif du report est obligatoire.'; $('dlg-delai-motif').focus(); }
+  };
+  dlg.showModal();
+  setTimeout(function () { $('dlg-delai-motif').focus(); }, 0);
 }
-function puce(s){
-  const titre = LIBELLE_ETAT[s.etat]+" — "+(s.code ? "HTTP "+s.code+", " : "")+s.ms+" ms"+(s.erreur ? " — "+s.erreur : "");
-  return `<a class="service ${s.etat}" href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(titre)}"><i></i>${esc(s.nom)}</a>`;
-}
-function dessinerSante(j, definitif = true){
-  const S = j.services, R = j.sources || [], lignes = [];
-  E("lServices").innerHTML = S.map(puce).join("");
-  E("lSources").innerHTML = R.map(r => `<span class="service ${r.etat}" title="${esc(LIBELLE_ETAT[r.etat]+" — "+(r.code ? "HTTP "+r.code+", " : "")+r.ms+" ms"+(r.erreur ? " — "+r.erreur : ""))}"><i></i>${esc(r.nom)}</span>`).join("");
-  for(const s of S){
-    if(s.etat==="ko") lignes.push(["ko","✖ "+s.nom+" — injoignable : "+(s.erreur || "HTTP "+s.code)]);
-    else if(s.etat==="lent") lignes.push(["lent","⏱ "+s.nom+" — lent : "+s.ms+" ms (réveil à froid probable)"]);
-    else if(s.etat==="attention" && !s.detail) lignes.push(["attention","⚠ "+s.nom+" — page d'accueil introuvable (HTTP "+s.code+")"]);
-    for(const d of (s.detail||[])) lignes.push([d.niveau==="ok" ? "info" : d.niveau, (d.niveau==="ok" ? "• " : d.niveau==="ko" ? "✖ " : "⚠ ")+s.nom+" — "+d.texte]);
-  }
-  for(const r of R) if(r.etat!=="ok") lignes.push([r.etat==="ko" ? "ko" : "lent", (r.etat==="ko" ? "✖ " : "⏱ ")+r.nom+" — "+(r.etat==="ko" ? "ne répond pas : "+(r.erreur || "HTTP "+r.code) : "lent : "+r.ms+" ms")+" (utilisée notamment par "+(UTILISE_PAR[r.nom]||"la suite")+")"]);
-  E("sSante").innerHTML = lignes.map(([c,t])=>`<div class="l ${c}">${esc(t)}</div>`).join("");
-  const tous = [...S, ...R], ko = tous.filter(x=>x.etat==="ko").length, a_voir = tous.filter(x=>gravite(x.etat)===2).length;
-  voyant("vServices", ko ? "ko" : a_voir ? "attente" : "ok");
-  const parties = [pluriel(S.length,"service","services")+" · "+pluriel(R.length,"source","sources")];
-  if(ko) parties.push(pluriel(ko,"muet","muets")); if(a_voir) parties.push(pluriel(a_voir,"à voir","à voir"));
-  E("sServices").textContent = parties.join(" · ")+(ko||a_voir ? "" : " · tout répond")+" — vérifié à "+heure(Date.now());
-  const rok = R.filter(r=>r.etat!=="ko").length; E("sSources").textContent = R.length ? rok+" sur "+R.length+" répondent" : "";
-  if(definitif) for(const [c,t] of lignes) if(c==="ko"||c==="attention"||c==="degrade"||c==="lent") noter("Santé : "+t);
-}
-async function pingDirect(u){
-  for(let essai=1; essai<=2; essai++){
-    try{ const ctl = new AbortController(), t = setTimeout(()=>ctl.abort(), 20000); await fetch(u, {mode:"no-cors", cache:"no-store", signal:ctl.signal}); clearTimeout(t); return true; }catch(e){}
-  }
-  return false;
-}
-async function verifierServicesDirect(){
-  let ko = 0;
-  await Promise.all(SERVICES.map(async ([n,u],i)=>{
-    const el = E("svc"+i), bon = await pingDirect(u);
-    el.className = "service "+(bon ? "ok" : "ko"); if(!bon){ ko++; el.title = "injoignable"; noter("Service "+n+" : injoignable"); }
-  }));
-  voyant("vServices", ko ? "ko" : "ok");
-  E("sServices").textContent = (ko ? ko+" service(s) injoignable(s)" : SERVICES.length+" services joignables")+" — vérifiés à "+heure(Date.now())+" (sondage direct : le détail n'est pas disponible)";
-}
-async function verifierServices(){
-  E("lServices").innerHTML = SERVICES.map(([n,u],i)=>`<a class="service attente" id="svc${i}" href="${u}" target="_blank" rel="noopener"><i></i>${n}</a>`).join("");
-  voyant("vServices","attente");
-  let j;
-  try{ j = await appelSante(); }
-  catch(e){ noter("Santé : fonction serveur indisponible ("+e.message+"), repli sur le sondage direct"); return verifierServicesDirect(); }
-  const ko = [...j.services.filter(s=>s.etat==="ko"), ...(j.sources||[]).filter(r=>r.etat==="ko")].map(s=>s.nom);
-  dessinerSante(j, !ko.length);   // le premier résultat s'affiche tout de suite
-  if(ko.length){   // une seconde chance aux muets (services ET sources), puis mise à jour ; c'est cet appel de reprise qui déclare l'incident au journal commun
-    try{
-      await new Promise(r=>setTimeout(r, 2000));
-      const j2 = await appelSante(ko);
-      for(const s2 of j2.services){ const i = j.services.findIndex(s=>s.nom===s2.nom); if(i>=0) j.services[i] = s2; }
-      for(const r2 of (j2.sources||[])){ const i = (j.sources||[]).findIndex(r=>r.nom===r2.nom); if(i>=0) j.sources[i] = r2; }
-    }catch(e){ noter("Santé : reprise impossible ("+e.message+")"); }
-    dessinerSante(j);
-  }
-}
-verifierServices();
 
-/* au chargement : lecture seule du journal ; la veille se déclenche avec l'ouverture de la journée */
-verifierVeille();
+/* ---------- Bilan des dossiers classés du mois (le courriel du 1er du mois reprendra ces nombres) ---------- */
+function bilanMois(classes) {
+  var mois = etat.aujourdhui.slice(0, 7), precedent = C.decaler(mois + '-01', -1).slice(0, 7);
+  function bloc(m) {
+    var l = classes.filter(function (d) { return d.classe_le && d.classe_le.slice(0, 7) === m; });
+    var clos = {}, nClos = 0, nAb = 0, nSig = 0;
+    l.forEach(function (d) {
+      if (d.etape === 'clos') { var k = /^Autre/.test(d.motif_cloture || '') ? 'Autre' : (d.motif_cloture || 'Sans motif'); clos[k] = (clos[k] || 0) + 1; nClos++; }
+      else if (d.etape === 'abandonne') nAb++; else nSig++;
+    });
+    var nomMois = new Date(m + '-15T12:00:00Z').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    var detail = Object.keys(clos).map(function (k) { return clos[k] + ' « ' + k.toLowerCase() + ' »'; }).join(', ');
+    return el('li', {}, [el('b', { texte: nomMois.charAt(0).toUpperCase() + nomMois.slice(1) + ' : ' }),
+      nClos + ' clos' + (detail ? ' (' + detail + ')' : '') + ', ' + nAb + ' abandonné' + (nAb > 1 ? 's' : '') + ', ' + nSig + ' signé' + (nSig > 1 ? 's' : '')]);
+  }
+  return el('section', { classe: 'bloc' }, [el('h3', { texte: 'Bilan' }), el('ul', { classe: 'chrono' }, [bloc(mois), bloc(precedent)])]);
+}
+
+/* ---------- Pont provisoire : relevés des mails déposés dans le Drive (arbitrages du 21/10/2026) ----------
+   Des tâches programmées Claude lisent la messagerie et déposent une fiche JSON par relevé dans le dossier
+   Drive « SUIVI – relevés ». À l'ouverture (puis toutes les 15 minutes), la page lit les fiches nouvelles
+   et les confie au serveur, qui rattache les mails.
+   Lecture PAR LE RELAIS (arbitrage du 21/10/2026, le client Google étant plein) : SUIVI ne demande plus
+   lui-même de jeton Google. Il ouvre dans un cadre invisible la page relais.html de MORNING (adresse déjà
+   autorisée), qui lit le Drive à sa place ; si MORNING ne répond pas en 10 s, bascule sur le relais de
+   secours logé dans HISTO. Le jeton ne quitte jamais le relais. Si l'accord Google manque, un encadré
+   « Autoriser la lecture du Drive » ouvre le relais dans une petite fenêtre. */
+var DOSSIER_RELEVES = 'SUIVI – relevés';
+var RELAIS = ['https://connexion-omega.vercel.app/relais.html', 'https://histo-sand.vercel.app/relais.html'];
+var pontEnCours = false, pontMessage = '', pontAccord = false;
+var relaisActif = null, relaisN = 0, relaisAttentes = {}, relaisPrets = [];
+window.addEventListener('message', function (ev) {
+  var m = ev.data;
+  if (!m || !m.fidalRelais) return;
+  if (!RELAIS.some(function (u) { return new URL(u).origin === ev.origin; })) return;
+  if (m.fidalRelais === 'pret') { relaisPrets.slice().forEach(function (f) { f(ev); }); return; }
+  if (m.fidalRelais === 'reponse' && relaisAttentes[m.n]) { var f = relaisAttentes[m.n]; delete relaisAttentes[m.n]; f(m); }
+});
+function attendrePret(source, delai) {
+  return new Promise(function (res) {
+    var fini = false;
+    function f(ev) { if (ev.source === source() && !fini) { fini = true; relaisPrets.splice(relaisPrets.indexOf(f), 1); res(ev); } }
+    relaisPrets.push(f);
+    setTimeout(function () { if (!fini) { fini = true; relaisPrets.splice(relaisPrets.indexOf(f), 1); res(null); } }, delai);
+  });
+}
+function ouvrirRelais() {
+  if (relaisActif) return Promise.resolve(relaisActif);
+  return RELAIS.reduce(function (p, url) {
+    return p.then(function (r) {
+      if (r) return r;
+      var cadre = document.createElement('iframe');
+      cadre.src = url; cadre.title = 'relais Drive'; cadre.setAttribute('aria-hidden', 'true'); cadre.tabIndex = -1;
+      cadre.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
+      var attente = attendrePret(function () { return cadre.contentWindow; }, 10000);
+      document.body.appendChild(cadre);
+      return attente.then(function (ev) {
+        if (ev) return { cible: cadre.contentWindow, origine: ev.origin, url: url, cadre: cadre };
+        cadre.remove(); return null;
+      });
+    });
+  }, Promise.resolve(null)).then(function (r) {
+    if (!r) throw new Error('relais Drive injoignable (MORNING et HISTO).');
+    relaisActif = r; return r;
+  });
+}
+function appelRelais(op) {
+  return ouvrirRelais().then(function (r) {
+    return new Promise(function (res, rej) {
+      var n = ++relaisN;
+      var minuterie = setTimeout(function () { delete relaisAttentes[n]; rej(new Error('le relais Drive ne répond plus.')); }, 60000);
+      relaisAttentes[n] = function (m) {
+        clearTimeout(minuterie);
+        if (m.ok) return res(m.resultat);
+        var e = new Error(m.erreur || 'erreur du relais'); e.accord = !!m.accord; rej(e);
+      };
+      op.fidalRelais = 'appel'; op.n = n;
+      r.cible.postMessage(op, r.origine);
+    });
+  });
+}
+function autoriserDrive() {
+  var url = (relaisActif && relaisActif.url) || RELAIS[0];
+  var fen = window.open(url + '?fenetre=1', 'relaisDriveFidal', 'width=520,height=440');
+  if (!fen) { pontMessage = 'Relevés des mails : la fenêtre a été bloquée par le navigateur, autorisez les fenêtres pour SUIVI.'; panneauSiLibre(); return; }
+  pontMessage = 'Relevés des mails : accord Google en cours dans la petite fenêtre…'; panneauSiLibre();
+  attendrePret(function () { return fen; }, 180000).then(function (ev) {
+    if (!ev) { pontMessage = 'Relevés des mails : accord Google non donné.'; panneauSiLibre(); return; }
+    var ancien = relaisActif;
+    relaisActif = { cible: fen, origine: ev.origin, url: url, cadre: null };
+    pontAccord = false;
+    lireReleves().then(function () {
+      try { fen.postMessage({ fidalRelais: 'appel', op: 'fermer' }, ev.origin); } catch (e) {}
+      if (ancien && ancien.cadre) ancien.cadre.remove();
+      relaisActif = null;  /* la prochaine lecture repart du cadre invisible, l'accord étant désormais donné */
+    });
+  });
+}
+function chercherDrive(q, fields, orderBy, pageSize) { return appelRelais({ op: 'chercher', q: q, fields: fields, orderBy: orderBy, pageSize: pageSize }); }
+function lireFichierDrive(id) { return appelRelais({ op: 'lire', id: id }); }
+function lireReleves() {
+  if (pontEnCours) return Promise.resolve();
+  pontEnCours = true;
+  var q = "name = '" + DOSSIER_RELEVES.replace(/'/g, "\\'") + "' and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
+  return chercherDrive(q, 'files(id)', null, 5).then(function (r) {
+    pontAccord = false;
+    if (!r.files || !r.files.length) throw new Error('dossier Drive « ' + DOSSIER_RELEVES + ' » introuvable.');
+    var q2 = "'" + r.files[0].id + "' in parents and trashed = false and name contains '.json'";
+    return Promise.all([
+      chercherDrive(q2, 'files(id,name,createdTime)', 'createdTime', 200),
+      api('GET', { action: 'releves_repris' })
+    ]);
+  }).then(function (rr) {
+    var connus = {}; (rr[1].ids || []).forEach(function (id) { connus[id] = 1; });
+    /* les fiches d'essai (« essai-… ») ne sont pas des relevés */
+    var nouvelles = (rr[0].files || []).filter(function (f) { return !connus[f.id] && f.name.indexOf('essai') !== 0; });
+    if (!nouvelles.length) return null;
+    var fiches = [];
+    return nouvelles.reduce(function (p, f) {
+      return p.then(function () {
+        return lireFichierDrive(f.id).then(function (t) {
+          var c = null; try { c = JSON.parse(t); } catch (e) { c = null; }
+          fiches.push({ drive_id: f.id, nom: f.name, contenu: c });
+        }).catch(function () { /* fichier momentanément illisible : il sera repris au prochain passage */ });
+      });
+    }, Promise.resolve()).then(function () {
+      var lots = []; for (var i = 0; i < fiches.length; i += 10) lots.push(fiches.slice(i, i + 10));
+      var total = { fiches: 0, rattaches: 0, a_rattacher: 0 };
+      return lots.reduce(function (p, lot) {
+        return p.then(function () { return api('POST', { action: 'releves', fiches: lot }).then(function (j) {
+          total.fiches += j.bilan.fiches; total.rattaches += j.bilan.rattaches; total.a_rattacher += j.bilan.a_rattacher; etat.releves = j.releves;
+        }); });
+      }, Promise.resolve()).then(function () { return total; });
+    });
+  }).then(function (total) {
+    pontMessage = total && total.fiches ? 'Dernière reprise : ' + total.fiches + (total.fiches > 1 ? ' relevés, ' : ' relevé, ') + total.rattaches + ' mail' + (total.rattaches > 1 ? 's' : '') + ' rangé' + (total.rattaches > 1 ? 's' : '') + ', ' + total.a_rattacher + ' à rattacher.' : '';
+    return charger();
+  }).catch(function (err) {
+    pontAccord = !!err.accord;
+    pontMessage = pontAccord ? '' : 'Relevés des mails : ' + err.message;
+    panneauSiLibre();
+  }).then(function () { pontEnCours = false; });
+}
+function panneauSiLibre() { if (!etat.choisi) panneauATraiter(); }
+function heureCourte(iso) { return iso ? new Date(iso).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; }
+function encadreAccord() {
+  return el('div', { style: 'border:1px solid var(--orange);border-radius:4px;padding:10px 14px;margin:8px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap' }, [
+    el('span', { texte: 'La lecture des relevés dans le Drive attend votre accord Google.' }),
+    el('button', { classe: 'bouton fort', type: 'button', texte: 'Autoriser la lecture du Drive', onclick: autoriserDrive })
+  ]);
+}
+function blocReleves() {
+  if (pontAccord) return encadreAccord();
+  var r = etat.releves, enfants = [];
+  if (!r) return el('p', { classe: 'sous', texte: pontMessage || 'Les relevés des mails apparaîtront ici dès la première fiche reprise.' });
+  enfants.push(el('span', { texte: r.dernier ? 'Dernier relevé : ' + heureCourte(r.dernier) : 'Aucun relevé reçu pour l’instant.' }));
+  if (r.manques) enfants.push(el('span', { classe: r.manques >= 3 ? 'rouge' : 'alerte', texte: ' — ' + r.manques + ' relevé' + (r.manques > 1 ? 's' : '') + ' manqué' + (r.manques > 1 ? 's' : '') + ' d’affilée' }));
+  (r.erreurs || []).slice(0, 2).forEach(function (e) { enfants.push(el('span', { classe: 'alerte', texte: ' — fiche en erreur : ' + (e.erreur || e.nom) })); });
+  if (pontMessage) enfants.push(el('span', { texte: ' — ' + pontMessage }));
+  return el('p', { classe: 'sous' }, enfants);
+}
+
+/* ---------- Mails à rattacher : rattacher, créer, ignorer ---------- */
+var PREFIXES = /^(vente|acquisition|donation(-partage)?|succession|bail|cession|promesse|licitation|testament|contrat de mariage|procuration|certification|fiducie)\s+/i;
+function propDuMail(m) {
+  var nom = m.dossier_pressenti || m.objet || '';
+  var sans = nom.replace(PREFIXES, ''), morceaux = sans.split(/\s+\/\s+/);
+  var etude = (m.etude || []).concat([m.expediteur].concat(m.destinataires || [], m.copies || []).filter(function (a) { return a && /@fidal\.notaires\.fr$/.test(a); }));
+  var ext = [m.expediteur].concat(m.destinataires || [], m.copies || []).filter(function (a) { return a && !/@fidal\.notaires\.fr$/.test(a); });
+  return {
+    intitule: nom.toUpperCase(), partie1: morceaux[0] || '', partie2: morceaux[1] || '', numero: '', signature_prevue: (m.changements && m.changements.date_signature) || '',
+    adresses: ext.filter(function (a, i) { return ext.indexOf(a) === i; }), etude: etude.filter(function (a, i) { return T.estEtude(a) && etude.indexOf(a) === i; }),
+    etape: 'en_cours', type_dossier: '', date_ouverture: m.date_mail ? C.aujourdhui(new Date(m.date_mail)) : etat.aujourdhui, mail_outlook: m.id_outlook,
+    mail: { objet: m.objet, expediteur: m.sens === 'envoyé' ? 'à ' + (m.destinataires || []).join(', ') : m.expediteur, date: m.date_mail ? C.aujourdhui(new Date(m.date_mail)) : '', apercu: m.resume || '' }
+  };
+}
+function meilleurDossier(m, ouverts) {
+  var cible = sansAccent(m.dossier_pressenti || m.objet || '').replace(/[^a-z0-9]+/g, ' ');
+  var meilleur = null, score = 0;
+  ouverts.forEach(function (d) {
+    var mots = sansAccent((d.partie1 || '') + ' ' + (d.partie2 || '') + ' ' + (d.numero || '')).split(/[^a-z0-9]+/).filter(function (x) { return x.length > 2; });
+    var s = mots.filter(function (x) { return cible.indexOf(x) >= 0; }).length;
+    if (s > score) { score = s; meilleur = d; }
+  });
+  return meilleur;
+}
+function ouvrirARattacher() {
+  return api('GET', { action: 'a_rattacher' }).then(function (j) {
+    etat.ouvert = null;
+    var v = enteteVolet('Mails à rattacher');
+    var ouverts = etat.dossiers.filter(function (d) { return actif(d) && d.etape !== 'abandonne' && d.etape !== 'clos'; })
+      .sort(function (a, b) { return a.intitule.localeCompare(b.intitule, 'fr'); });
+    if (!j.mails.length) { v.appendChild(el('p', { classe: 'sous', texte: 'Aucun mail en attente : tout est rangé.' })); return; }
+    v.appendChild(el('p', { classe: 'sous', texte: j.mails.length + ' mail' + (j.mails.length > 1 ? 's' : '') + ' que SUIVI n’a pas pu ranger avec certitude, du plus récent au plus ancien.' }));
+    j.mails.forEach(function (m) {
+      var choix = el('select', { 'aria-label': 'Dossier' });
+      choix.appendChild(el('option', { value: '', texte: 'Choisir le dossier…' }));
+      var proche = meilleurDossier(m, ouverts);
+      ouverts.forEach(function (d) { var o = el('option', { value: String(d.id), texte: d.intitule }); if (proche && d.id === proche.id) o.selected = true; choix.appendChild(o); });
+      var qui = m.sens === 'envoyé' ? 'Envoyé à ' + (m.destinataires || []).slice(0, 2).join(', ') : 'Reçu de ' + (m.expediteur || '?');
+      var details = [el('b', { texte: m.objet || '(sans objet)' }), el('span', { classe: 'sous', texte: heureCourte(m.date_mail) + ' — ' + qui })];
+      if (m.resume) details.push(el('span', { texte: m.resume }));
+      if (m.dossier_pressenti) details.push(el('span', { classe: 'sous', texte: 'Dossier pressenti : ' + m.dossier_pressenti + (m.motif_rattachement ? ' (' + m.motif_rattachement + ')' : '') + ' — ' + (m.motif_etat || m.certitude) }));
+      else if (m.motif_etat) details.push(el('span', { classe: 'sous', texte: m.motif_etat }));
+      if (m.pieces_jointes && m.pieces_jointes.length) details.push(el('span', { classe: 'sous', texte: 'Pièces jointes : ' + m.pieces_jointes.join(', ') }));
+      var li = el('section', { classe: 'bloc mail-attente' }, details.concat([
+        el('div', { classe: 'ligne' }, [choix,
+          el('button', { classe: 'bouton fort petit', texte: 'Rattacher', onclick: function () {
+            if (!choix.value) return choix.focus();
+            api('POST', { action: 'mail_rattacher', mail_id: m.id_outlook, id: +choix.value }).then(charger).then(ouvrirARattacher).catch(alerte);
+          } }),
+          el('button', { classe: 'bouton petit', texte: 'Créer un dossier', onclick: function () { nouveauDossier(propDuMail(m)); } }),
+          el('button', { classe: 'bouton petit', texte: 'Ignorer', onclick: function () {
+            api('POST', { action: 'mail_ignorer', mail_id: m.id_outlook }).then(function (r) {
+              if (r.fois === 2) window.alert('Deuxième mail ignoré de ' + r.expediteur + ' : ses prochains mails seront écartés d’office.');
+            }).then(charger).then(ouvrirARattacher).catch(alerte);
+          } })
+        ])
+      ]));
+      v.appendChild(li);
+    });
+  }).catch(alerte);
+}
+
+/* ---------- Démarrage ---------- */
+if (sessionStorage.getItem(CLE)) demarrer().catch(function () { verrouiller(); });
+else verrouiller();
 </script>
 </body>
 </html>
