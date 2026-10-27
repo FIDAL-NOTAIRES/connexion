@@ -14,7 +14,7 @@ const base = () => { if (!process.env.DATABASE_URL) return null; return (_sql ||
 const HOTES = ["connexion-omega", "fidal-apps", "carto-six", "marteau-rho", "fusion-three-kappa", "countdown-kappa-azure", "redpar-frontend", "urba-lemon", "xylo-phi",
   "trente", "matrice-black", "certif-bay", "risques", "paint-blue", "plume-mocha", "pret-particulier", "pret-pro", "prix-mu", "attente", "partage-amiable",
   "consult-sand", "histo-sand", "moneta-navy", "copro-sigma",
-  "coffee-taupe-gamma", "phare-ashy", "taxverif-particulier", "suivi-pi-orcin", "assistant-ebon-phi"].map(h => `https://${h}.vercel.app`);
+  "coffee-taupe-gamma", "phare-ashy", "taxverif-particulier", "suivi-pi-orcin", "assistant-ebon-phi", "lexio-topaz"].map(h => `https://${h}.vercel.app`);
 const origineAutorisee = o => !!o && (HOTES.includes(o) || String(process.env.INCIDENTS_ORIGINES || "").split(",").map(x => x.trim()).filter(Boolean).includes(o));
 const net = (t, max) => String(t == null ? "" : t).replace(/\s+/g, " ").trim().slice(0, max);
 
