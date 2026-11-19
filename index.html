@@ -105,6 +105,11 @@ main{max-width:760px;margin:0 auto}
 .journal{margin-top:26px;font-size:12px;color:var(--encre-faible)}
 .journal summary{cursor:pointer;user-select:none}
 .journal pre{margin:8px 0 0;white-space:pre-wrap;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.25);padding:10px 12px;border-radius:10px;max-height:220px;overflow:auto}
+/* 19/11/2026 : enchaînement vers ASSISTANT au démarrage du poste (adresse ?suite=assistant) */
+.suite{margin:14px auto 0;max-width:560px;background:rgba(51,131,139,.16);border:1px solid rgba(109,213,220,.45);border-radius:12px;padding:12px 14px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 14px;font-size:14px;text-align:center}
+.suite[hidden]{display:none}
+.suite .btn{font-size:14px;padding:9px 18px}
 .avis{margin-top:18px;background:rgba(160,16,64,.14);border:1px solid rgba(160,16,64,.45);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5}
 .avis[hidden]{display:none}
 @media (max-width:520px){ .heros h1{font-size:27px} .btn{width:100%} }
@@ -128,6 +133,12 @@ main{max-width:760px;margin:0 auto}
   <div class="action">
     <button class="btn" id="btnOuvrir" type="button">Ouvrir la journée</button>
     <div class="mot" id="mot">Préparation…</div>
+  </div>
+
+  <div class="suite" id="suite" role="status" hidden>
+    <span id="suiteTexte"></span>
+    <button class="btn" id="suiteOuvrir" type="button">Ouvrir maintenant</button>
+    <button class="btn secondaire" id="suiteRester" type="button">Rester sur MORNING</button>
   </div>
 
   <div class="avis" id="avisOrigine" hidden>
@@ -249,7 +260,7 @@ function expirer(){
 async function connecter(interactif){
   E("mot").textContent = interactif ? "Ouverture de la fenêtre Google…" : "Reprise de l'accord déjà donné…";
   const j = await FidalAcces.jeton({interactif});
-  if(j){ await afficherConnexion(j); E("avisOrigine").hidden = true; if(interactif) lancerVeille(false); chargerChantiers(j); return true; }
+  if(j){ await afficherConnexion(j); E("avisOrigine").hidden = true; if(interactif) lancerVeille(false); chargerChantiers(j); enchainer(); return true; }
   if(interactif){
     voyant("vDrive","ko");
     E("eDrive").textContent = "Connexion refusée ou fenêtre fermée.";
@@ -267,6 +278,26 @@ async function connecter(interactif){
 }
 E("btnOuvrir").onclick = () => connecter(true);
 E("btnRenouveler").onclick = () => connecter(true);
+
+/* ---------- 19/11/2026 : enchaînement au démarrage du poste ----------
+   Le raccourci de démarrage de Windows ouvre MORNING avec ?suite=assistant. Dès l'accord Google obtenu
+   (clic du matin ou reprise silencieuse), un bandeau annonce l'outil suivant : sans réaction, il remplace
+   MORNING dans le même onglet au bout de cinq secondes (un nouvel onglet serait bloqué par le navigateur).
+   Ouverte sans ce paramètre, MORNING reste MORNING. Une seule fois par chargement de la page. */
+const SUITES = { assistant: { nom: "ASSISTANT", url: "https://assistant-ebon-phi.vercel.app/" } };
+const SUITE = SUITES[(new URLSearchParams(location.search).get("suite") || "").toLowerCase()] || null;
+let suiteFaite = false, suiteMinuteur = null;
+function enchainer(){
+  if(!SUITE || suiteFaite) return;
+  suiteFaite = true;
+  let reste = 5;
+  const aller = () => { clearInterval(suiteMinuteur); E("suiteTexte").textContent = "Ouverture de " + SUITE.nom + "…"; noter("Enchaînement vers " + SUITE.nom + "."); location.href = SUITE.url; };
+  const dire = () => { E("suiteTexte").textContent = SUITE.nom + " s'ouvre dans " + reste + " seconde" + (reste > 1 ? "s" : "") + "."; };
+  dire(); E("suite").hidden = false;
+  suiteMinuteur = setInterval(() => { reste--; if(reste <= 0) aller(); else dire(); }, 1000);
+  E("suiteOuvrir").onclick = aller;
+  E("suiteRester").onclick = () => { clearInterval(suiteMinuteur); E("suite").hidden = true; noter("Enchaînement vers " + SUITE.nom + " annulé : MORNING reste ouverte."); };
+}
 
 /* Au chargement : si un accord a déjà été donné aujourd'hui, on tente la reprise
    silencieuse. Le navigateur peut la bloquer (fenêtre non demandée) : le bouton reste. */
